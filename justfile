@@ -73,11 +73,37 @@ db-shell:
 frontend-build:
     {{compose}} run --rm frontend npm run build
 
+# Run frontend ESLint.
+frontend-lint:
+    {{compose}} run --rm frontend npm run lint
+
+# Run frontend TypeScript type checks.
+frontend-typecheck:
+    {{compose}} run --rm frontend npm run typecheck
+
+# Run backend Ruff lint.
+backend-lint:
+    {{compose}} run --rm backend sh -c "pip install -r requirements-dev.txt && ruff check ."
+
+# Run backend tests.
+backend-test:
+    {{compose}} run --rm backend sh -c "pip install -r requirements-dev.txt && PYTHONPATH=. pytest"
+
+# Build app Docker images.
+docker-build:
+    {{compose}} build backend frontend
+
 # Run current available checks.
 check:
+    {{compose}} run --rm backend sh -c "pip install -r requirements-dev.txt && ruff check . && PYTHONPATH=. pytest"
+    {{compose}} run --rm frontend npm run lint
+    {{compose}} run --rm frontend npm run typecheck
+    {{compose}} run --rm frontend npm run build
+
+# Smoke test the running stack.
+smoke:
     {{compose}} ps
     curl -fsS http://localhost/api/health
-    {{compose}} run --rm frontend npm run build
 
 # Stop containers and remove orphaned containers, keeping the database volume.
 clean:
