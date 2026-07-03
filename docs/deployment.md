@@ -65,21 +65,45 @@ DROPLET_SSH_KEY=<private deploy key authorized for vicky on the droplet>
 
 Use a dedicated deploy key, not a personal SSH key.
 
+## Droplet Environment
+
+Create `/home/vicky/simonize/.env` on the droplet before the first production deploy:
+
+```bash
+cd /home/vicky/simonize
+cp .env.example .env
+$EDITOR .env
+./scripts/check-production-env.sh .env
+```
+
+Required production values:
+
+```text
+DB_PASSWORD=<strong unique database password>
+SECRET_KEY=<strong unique application secret>
+ADMIN_USERNAME=simon
+ADMIN_PASSWORD=<strong unique admin password>
+```
+
+Production deploys fail if `DB_PASSWORD`, `SECRET_KEY`, or `ADMIN_PASSWORD` are missing or still set to the defaults from `.env.example`.
+
 ## Manual Production Commands
 
 Run these on the droplet from `/home/vicky/simonize`:
 
 ```bash
-just prod-up
-just prod-migrate
-just prod-smoke
+just prod-check-env
+just prod-deploy-local
 ```
 
 Equivalent raw Docker Compose commands:
 
 ```bash
-NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+./scripts/check-production-env.sh .env
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d db
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 curl -fsS http://127.0.0.1:8082/api/health
 ```
 

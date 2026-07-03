@@ -110,6 +110,10 @@ smoke:
 prod-up:
     {{prod_compose}} up -d --build
 
+# Check that production secrets are present and not unsafe defaults.
+prod-check-env env_file=".env":
+    ./scripts/check-production-env.sh {{env_file}}
+
 # Stop the production stack, keeping the database volume.
 prod-down:
     {{prod_compose}} down
@@ -127,9 +131,11 @@ prod-smoke:
     curl -fsS http://127.0.0.1:8082/api/health
 
 # Build, migrate, and smoke test the production stack locally/on the droplet.
-prod-deploy-local:
-    {{prod_compose}} up -d --build
+prod-deploy-local: prod-check-env
+    {{prod_compose}} build
+    {{prod_compose}} up -d db
     {{prod_compose}} run --rm backend alembic upgrade head
+    {{prod_compose}} up -d
     curl -fsS http://127.0.0.1:8082/api/health
 
 # Stop containers and remove orphaned containers, keeping the database volume.

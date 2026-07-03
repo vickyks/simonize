@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   backend:
@@ -74,6 +74,11 @@ jobs:
       - name: Validate compose file
         run: docker compose config
 
+      - name: Validate production compose file
+        run: |
+          NGINX_HTTP_PORT=127.0.0.1:8082 docker compose -f docker-compose.yml -f docker-compose.prod.yml config > /tmp/prod-compose.yml
+          grep -q '127.0.0.1:8082' /tmp/prod-compose.yml
+
       - name: Build images
         run: docker compose build backend frontend
 
@@ -107,11 +112,20 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            echo "Starting production stack..."
-            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+            echo "Checking production environment..."
+            ./scripts/check-production-env.sh .env
+
+            echo "Building production images..."
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+
+            echo "Ensuring database is running..."
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d db
 
             echo "Running database migrations..."
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
+
+            echo "Starting production stack..."
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
             echo "Smoke checking Simonizer..."
             curl -fsS http://127.0.0.1:8082/api/health
