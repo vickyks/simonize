@@ -28,11 +28,11 @@ The backend and database are not exposed directly to the host network or interne
 
 The development compose file can continue exposing Simonizer nginx on port 80 for local Slice 0 usage.
 
-Production should use a compose override that changes the nginx port binding to:
+Production should set `NGINX_HTTP_PORT=127.0.0.1:8082` when running Docker Compose. The base compose file should define nginx's port binding as:
 
 ```yaml
 ports:
-  - "127.0.0.1:8082:80"
+  - "${NGINX_HTTP_PORT:-80}:80"
 ```
 
 This avoids conflict with the host nginx service already listening on ports 80 and 443.
@@ -86,7 +86,7 @@ Required GitHub secrets:
 
 ## Operational Commands
 
-Production deploy commands should be available locally as `just` recipes, using the production compose override:
+Production deploy commands should be available locally as `just` recipes, using `NGINX_HTTP_PORT=127.0.0.1:8082`:
 
 - `just prod-up`
 - `just prod-down`

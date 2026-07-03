@@ -4,7 +4,7 @@
 
 **Goal:** Add production deployment support so successful `main` builds deploy Simonizer to the DigitalOcean droplet behind host nginx.
 
-**Architecture:** The droplet's host nginx remains the public entrypoint and proxies `simonizer.vickystephens.co.uk` to `127.0.0.1:8082`. Simonizer keeps its internal Docker nginx container, which routes `/api/*` to FastAPI and `/*` to the React frontend inside the Docker network. GitHub Actions SSHes to `/home/vicky/simonize`, pulls `main`, starts the production compose stack, runs Alembic, and smoke-checks the health endpoint.
+**Architecture:** The droplet's host nginx remains the public entrypoint and proxies `simonizer.vickystephens.co.uk` to `127.0.0.1:8082`. Simonizer keeps its internal Docker nginx container, which routes `/api/*` to FastAPI and `/*` to the React frontend inside the Docker network. GitHub Actions SSHes to `/home/vicky/simonize`, pulls `main`, starts the production compose stack with `NGINX_HTTP_PORT=127.0.0.1:8082`, runs Alembic, and smoke-checks the health endpoint.
 
 **Tech Stack:** GitHub Actions, Docker Compose, Nginx, FastAPI, Alembic, Vite/React, PostgreSQL, `just`.
 
@@ -15,7 +15,7 @@
 - Deploy user: `vicky`.
 - Public hostname: `simonizer.vickystephens.co.uk`.
 - Droplet IP: `178.62.1.70`.
-- Production host port binding: `127.0.0.1:8082:80` for the Simonizer Docker nginx service.
+- Production host port binding: `127.0.0.1:8082:80` for the Simonizer Docker nginx service, produced by setting `NGINX_HTTP_PORT=127.0.0.1:8082`.
 - Backend and PostgreSQL must remain internal to the Docker network.
 - Deployment must only run after backend, frontend, and Docker CI jobs pass on `main`.
 - Required GitHub secrets: `DROPLET_HOST`, `DROPLET_USER`, `DROPLET_SSH_KEY`.
@@ -26,7 +26,8 @@
 
 ## File Structure
 
-- Create `docker-compose.prod.yml`: production-only compose override that binds Simonizer nginx to `127.0.0.1:8082:80` instead of public port 80.
+- Modify `docker-compose.yml`: parameterize the nginx port binding as `${NGINX_HTTP_PORT:-80}:80` so development still uses port 80 and production can use `127.0.0.1:8082` without compose list-merge issues.
+- Create `docker-compose.prod.yml`: production compose marker file used by production commands alongside the base compose file.
 - Modify `justfile`: add production compose variables and recipes for `prod-up`, `prod-down`, `prod-logs`, `prod-migrate`, `prod-smoke`, and `prod-deploy-local`.
 - Modify `.github/workflows/ci.yml`: add a deploy job that depends on existing `backend`, `frontend`, and `docker` jobs and runs only for pushes to `main`.
 - Create `docs/deployment.md`: document required GitHub secrets, host nginx config, manual droplet commands, and troubleshooting commands.
@@ -37,31 +38,38 @@
 
 **Files:**
 - Create: `docker-compose.prod.yml`
+- Modify: `docker-compose.yml`
 - Modify: `justfile`
 
 **Interfaces:**
 - Consumes: existing `docker-compose.yml` services `backend`, `frontend`, `nginx`, and `db`.
-- Produces: production compose command `docker-compose -f docker-compose.yml -f docker-compose.prod.yml ...`; `just prod-smoke` returns success only if `http://127.0.0.1:8082/api/health` responds.
+- Produces: production compose command `NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml ...`; `just prod-smoke` returns success only if `http://127.0.0.1:8082/api/health` responds.
 
-- [ ] **Step 1: Add production compose override**
+- [ ] **Step 1: Parameterize the base nginx port binding**
+
+Modify `docker-compose.yml` so the nginx service port mapping is exactly:
+
+```yaml
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+```
+
+- [ ] **Step 2: Add production compose marker file**
 
 Create `docker-compose.prod.yml` with exactly this content:
 
 ```yaml
 version: "3.8"
 
-services:
-  nginx:
-    ports:
-      - "127.0.0.1:8082:80"
+services: {}
 ```
 
-- [ ] **Step 2: Verify the compose override changes only nginx port binding**
+- [ ] **Step 3: Verify the production command produces only the localhost nginx port binding**
 
 Run:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml config | grep -A3 'ports:'
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml config | grep -A3 'ports:'
 ```
 
 Expected output includes:
@@ -70,7 +78,13 @@ Expected output includes:
 - 127.0.0.1:8082:80
 ```
 
-- [ ] **Step 3: Add production variables and recipes to `justfile`**
+Expected output must not include:
+
+```text
+- 80:80
+```
+
+- [ ] **Step 4: Add production variables and recipes to `justfile`**
 
 Modify the top of `justfile` so it contains:
 
@@ -78,7 +92,7 @@ Modify the top of `justfile` so it contains:
 set dotenv-load := true
 
 compose := "docker-compose"
-prod_compose := "docker-compose -f docker-compose.yml -f docker-compose.prod.yml"
+prod_compose := "NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml"
 ```
 
 Add these recipes after the existing `smoke` recipe:
@@ -111,7 +125,7 @@ prod-deploy-local:
     curl -fsS http://127.0.0.1:8082/api/health
 ```
 
-- [ ] **Step 4: Verify just recipes parse**
+- [ ] **Step 5: Verify just recipes parse**
 
 Run:
 
@@ -130,22 +144,22 @@ prod-smoke
 prod-deploy-local
 ```
 
-- [ ] **Step 5: Run local non-destructive verification**
+- [ ] **Step 6: Run local non-destructive verification**
 
 Run:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml config >/dev/null
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml config >/dev/null
 ```
 
 Expected: command exits `0` with no output.
 
-- [ ] **Step 6: Commit Task 1**
+- [ ] **Step 7: Commit Task 1**
 
 Run:
 
 ```bash
-git add docker-compose.prod.yml justfile
+git add docker-compose.yml docker-compose.prod.yml justfile
 git commit -m "Add production compose commands"
 ```
 
@@ -207,10 +221,10 @@ Append this job after the existing `docker` job:
             git reset --hard origin/main
 
             echo "Starting production stack..."
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
             echo "Running database migrations..."
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
 
             echo "Smoke checking Simonizer..."
             curl -fsS http://127.0.0.1:8082/api/health
@@ -253,7 +267,7 @@ text = Path('.github/workflows/ci.yml').read_text()
 required = [
     'needs: [backend, frontend, docker]',
     "github.event_name == 'push' && github.ref == 'refs/heads/main'",
-    'docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build',
+    'NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build',
     'curl -fsS http://127.0.0.1:8082/api/health',
 ]
 missing = [item for item in required if item not in text]
@@ -375,8 +389,8 @@ just prod-smoke
 Equivalent raw Docker Compose commands:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
 curl -fsS http://127.0.0.1:8082/api/health
 ```
 
@@ -416,7 +430,7 @@ Run:
 
 ```bash
 just --list >/dev/null
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml config >/dev/null
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml config >/dev/null
 just check
 ```
 
