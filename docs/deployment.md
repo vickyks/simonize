@@ -126,8 +126,8 @@ Check Simonizer containers:
 
 ```bash
 cd /home/vicky/simonize
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=80 nginx backend
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=80 nginx backend
 ```
 
 If host nginx returns `502 Bad Gateway`, first check that something is listening on `127.0.0.1:8082`:

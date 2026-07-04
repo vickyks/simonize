@@ -152,11 +152,11 @@ jobs:
           ssh ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
             cd /home/vicky/simonize || exit 0
             echo "=== Production services ==="
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps || true
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps || true
             echo "=== Recent nginx logs ==="
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=40 nginx || true
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=40 nginx || true
             echo "=== Recent backend logs ==="
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=40 backend || true
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=40 backend || true
           EOF
 
       - name: Deployment summary
