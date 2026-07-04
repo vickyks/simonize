@@ -102,7 +102,7 @@ Equivalent raw Docker Compose commands:
 ./scripts/check-production-env.sh .env
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d db
-NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend sh -c "PYTHONPATH=. alembic upgrade head"
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 curl -fsS http://127.0.0.1:8082/api/health
 ```
