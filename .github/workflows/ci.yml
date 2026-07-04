@@ -77,7 +77,8 @@ jobs:
       - name: Validate production compose file
         run: |
           NGINX_HTTP_PORT=127.0.0.1:8082 docker compose -f docker-compose.yml -f docker-compose.prod.yml config > /tmp/prod-compose.yml
-          grep -q '127.0.0.1:8082' /tmp/prod-compose.yml
+          grep -Eq '127\.0\.0\.1:8082|host_ip: 127\.0\.0\.1' /tmp/prod-compose.yml
+          grep -Eq '127\.0\.0\.1:8082|published: "?8082"?' /tmp/prod-compose.yml
 
       - name: Build images
         run: docker compose build backend frontend
