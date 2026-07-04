@@ -1,6 +1,7 @@
 set dotenv-load := true
 
 compose := "docker-compose"
+prod_compose := "NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml"
 
 default:
     @just --list
@@ -104,6 +105,38 @@ check:
 smoke:
     {{compose}} ps
     curl -fsS http://localhost/api/health
+
+# Start the production stack with localhost-only nginx binding.
+prod-up:
+    {{prod_compose}} up -d --build
+
+# Check that production secrets are present and not unsafe defaults.
+prod-check-env env_file=".env":
+    ./scripts/check-production-env.sh {{env_file}}
+
+# Stop the production stack, keeping the database volume.
+prod-down:
+    {{prod_compose}} down
+
+# Follow production stack logs, or pass a service name: `just prod-logs backend`.
+prod-logs service="":
+    @if [ -n "{{service}}" ]; then {{prod_compose}} logs -f {{service}}; else {{prod_compose}} logs -f; fi
+
+# Run Alembic migrations against the production stack.
+prod-migrate:
+    {{prod_compose}} run --rm backend alembic upgrade head
+
+# Smoke test the production stack through its host-local port.
+prod-smoke:
+    curl -fsS http://127.0.0.1:8082/api/health
+
+# Build, migrate, and smoke test the production stack locally/on the droplet.
+prod-deploy-local: prod-check-env
+    {{prod_compose}} build
+    {{prod_compose}} up -d db
+    {{prod_compose}} run --rm backend alembic upgrade head
+    {{prod_compose}} up -d
+    curl -fsS http://127.0.0.1:8082/api/health
 
 # Stop containers and remove orphaned containers, keeping the database volume.
 clean:
