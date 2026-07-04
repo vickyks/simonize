@@ -72,7 +72,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate compose file
-        run: docker compose config
+        run: DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker compose config
 
       - name: Validate production compose file
         run: |
@@ -81,7 +81,7 @@ jobs:
           grep -Eq '127\.0\.0\.1:8082|published: "?8082"?' /tmp/prod-compose.yml
 
       - name: Build images
-        run: docker compose build backend frontend
+        run: DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker compose build backend frontend
 
   deploy:
     name: Deploy
@@ -121,6 +121,18 @@ jobs:
 
             echo "Ensuring database is running..."
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d db
+
+            echo "Waiting for database readiness..."
+            for i in $(seq 1 30); do
+              if NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T db pg_isready -U simonizer; then
+                break
+              fi
+              sleep 2
+              if [ "$i" = "30" ]; then
+                echo "Database did not become ready in time"
+                exit 1
+              fi
+            done
 
             echo "Running database migrations..."
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head

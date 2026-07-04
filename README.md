@@ -130,6 +130,7 @@ DB_PASSWORD=<strong database password>
 SECRET_KEY=<random long secret>
 ADMIN_USERNAME=simon
 ADMIN_PASSWORD=<strong admin password>
+NGINX_HTTP_PORT=80
 ```
 
 Generate a strong secret:
