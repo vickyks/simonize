@@ -67,6 +67,7 @@ Plaintext passwords are never stored or logged.
 Access tokens:
 
 - JWT signed with `SECRET_KEY`.
+- Include the authenticated user's id as the token subject (`sub`).
 - Expire after `ACCESS_TOKEN_EXPIRE_MINUTES`.
 - Returned in JSON as `{ "access_token": "...", "token_type": "bearer" }`.
 - Stored only in frontend memory.
@@ -74,6 +75,7 @@ Access tokens:
 Refresh tokens:
 
 - JWT signed with `SECRET_KEY`.
+- Include the authenticated user's id as the token subject (`sub`).
 - Expire after `REFRESH_TOKEN_EXPIRE_DAYS`.
 - Set as an httpOnly cookie by login and refresh endpoints.
 - Cleared by logout.
@@ -122,6 +124,19 @@ All `/api/*` routes are protected except:
 Protection should be implemented as a FastAPI dependency for routers where possible, not as business logic inside route handlers. For Slice 1, `GET /api/auth/me` is the protected route used to prove the protection path works.
 
 Future Slice 2+ routers should use the same `current_user` dependency.
+
+### User Scoping
+
+JWTs authorize exactly one user. The token subject (`sub`) is the authenticated user's database id, not a generic admin marker.
+
+The `current_user` dependency must:
+
+1. Decode and validate the bearer token.
+2. Read the user id from `sub`.
+3. Load that exact user from the database.
+4. Reject the request with `401` if the user is missing or inactive in future versions.
+
+Slice 1 does not yet have user-owned recovery data, but the auth boundary must be ready for it. Future routes that read or write user-owned data must query through `current_user` and filter by that user's id. A JWT for one user must not grant access to another user's data.
 
 ## Frontend Design
 
@@ -185,6 +200,7 @@ Backend tests:
 - Refresh without cookie returns `401`.
 - `/api/auth/me` returns `401` without a bearer token.
 - `/api/auth/me` returns username with a valid bearer token.
+- A token subject that refers to a missing user returns `401`.
 - Logout clears the refresh cookie.
 
 Frontend tests are not required in Slice 1 unless a test runner is already present. The frontend must pass ESLint, TypeScript, and production build.
