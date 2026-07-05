@@ -73,11 +73,12 @@ CREATE TABLE users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username        VARCHAR NOT NULL UNIQUE,
     hashed_password VARCHAR NOT NULL,
+    is_seeded       BOOLEAN NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
-Single row, seeded from environment variables.
+Seeded account is identified by `is_seeded = true` and rotated from environment variables without mutating any non-seeded users.
 
 ---
 
