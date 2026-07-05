@@ -22,6 +22,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("username", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(), nullable=False),
+        sa.Column("is_seeded", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )

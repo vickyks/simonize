@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 
 import * as authApi from '../api/auth'
@@ -22,6 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
+    authApi.setUnauthorizedHandler(() => {
+      setAccessToken(null)
+      setUsername(null)
+      setStatus('anonymous')
+    })
+
     async function restoreSession() {
       try {
         const token = await authApi.refresh()
@@ -43,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession()
     return () => {
       cancelled = true
+      authApi.setUnauthorizedHandler(null)
     }
   }, [])
 
@@ -55,10 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function handleLogout() {
-    await authApi.logout()
-    setAccessToken(null)
-    setUsername(null)
-    setStatus('anonymous')
+    try {
+      await authApi.logout()
+    } finally {
+      setAccessToken(null)
+      setUsername(null)
+      setStatus('anonymous')
+      window.history.replaceState(null, '', '/login')
+    }
   }
 
   return (

@@ -7,8 +7,18 @@ export type CurrentUser = {
   username: string
 }
 
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
+
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    if (response.status === 401) {
+      onUnauthorized?.()
+      window.history.replaceState(null, '', '/login')
+    }
     throw new Error(String(response.status))
   }
   return response.json() as Promise<T>

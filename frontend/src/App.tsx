@@ -8,8 +8,12 @@ function AppContent() {
     return <p>Loading...</p>
   }
 
-  if (auth.status === 'anonymous' || window.location.pathname === '/login') {
+  if (auth.status === 'anonymous') {
     return <Login />
+  }
+
+  if (window.location.pathname === '/login') {
+    window.history.replaceState(null, '', '/')
   }
 
   return (

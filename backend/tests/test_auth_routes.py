@@ -50,6 +50,17 @@ def test_login_success_sets_refresh_cookie(monkeypatch):
             assert response.json()["token_type"] == "bearer"
             assert response.json()["access_token"]
             assert "refresh_token" in response.cookies
+            refresh_cookie_headers = [
+                header
+                for header in response.headers.get_list("set-cookie")
+                if header.lower().startswith("refresh_token=")
+            ]
+            assert refresh_cookie_headers
+            refresh_cookie_header = refresh_cookie_headers[0]
+            assert "httponly" in refresh_cookie_header.lower()
+            assert "samesite=lax" in refresh_cookie_header.lower()
+            assert "path=/api/auth" in refresh_cookie_header.lower()
+            assert "secure" not in refresh_cookie_header.lower()
         finally:
             clear_overrides()
 

@@ -19,6 +19,7 @@ def test_seed_admin_user_creates_user(monkeypatch):
         user = AuthService(session).seed_admin_user()
 
         assert user.username == "simon"
+        assert user.is_seeded is True
         assert user.hashed_password != "secret-password"
         assert AuthService(session).verify_password("secret-password", user.hashed_password)
 
@@ -56,9 +57,36 @@ def test_seed_admin_user_updates_existing_user_when_credentials_rotate(monkeypat
 
         assert updated.id == user.id
         assert updated.username == "simon-new"
+        assert updated.is_seeded is True
         assert len(users) == 1
         assert service.authenticate("simon", "first-password") is None
         assert service.authenticate("simon-new", "second-password") == updated
+
+
+def test_seed_admin_user_does_not_hijack_non_seeded_user(monkeypatch):
+    monkeypatch.setattr(settings, "admin_username", "simon")
+    monkeypatch.setattr(settings, "admin_password", "seed-password")
+
+    with make_session() as session:
+        service = AuthService(session)
+        existing = User(
+            username="backoffice",
+            hashed_password=service.hash_password("backoffice-password"),
+            is_seeded=False,
+        )
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+
+        seeded = service.seed_admin_user()
+        users = session.exec(select(User)).all()
+
+        assert seeded.id != existing.id
+        assert seeded.username == "simon"
+        assert seeded.is_seeded is True
+        assert len(users) == 2
+        assert service.authenticate("backoffice", "backoffice-password") == existing
+        assert service.authenticate("simon", "seed-password") == seeded
 
 
 def test_authenticate_returns_user_for_correct_password(monkeypatch):

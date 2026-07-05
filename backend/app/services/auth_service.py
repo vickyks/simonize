@@ -23,23 +23,23 @@ class AuthService:
         return pwd_context.verify(plain_password, hashed_password)
 
     def seed_admin_user(self) -> User:
-        user = self.session.exec(
-            select(User).where(User.username == settings.admin_username)
-        ).first()
+        user = self.session.exec(select(User).where(User.is_seeded)).first()
         if user is None:
-            user = self.session.exec(select(User)).first()
-            if user is None:
-                user = User(username=settings.admin_username)
-            else:
-                user.username = settings.admin_username
+            user = User(username=settings.admin_username, is_seeded=True)
             user.hashed_password = self.hash_password(settings.admin_password)
             self.session.add(user)
             self.session.commit()
             self.session.refresh(user)
             return user
 
-        if not self.verify_password(settings.admin_password, user.hashed_password):
-            user.hashed_password = self.hash_password(settings.admin_password)
+        password_matches = self.verify_password(
+            settings.admin_password, user.hashed_password
+        )
+        if user.username != settings.admin_username or not password_matches:
+            user.username = settings.admin_username
+            if not password_matches:
+                user.hashed_password = self.hash_password(settings.admin_password)
+            user.is_seeded = True
             self.session.add(user)
             self.session.commit()
             self.session.refresh(user)
