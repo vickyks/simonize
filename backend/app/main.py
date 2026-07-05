@@ -7,11 +7,15 @@ from app.routers.auth import router as auth_router
 from app.services.auth_service import AuthService
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def seed_admin_user() -> None:
     for session in get_session():
         AuthService(session).seed_admin_user()
         break
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    seed_admin_user()
     yield
 
 

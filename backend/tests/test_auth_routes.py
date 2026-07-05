@@ -167,6 +167,17 @@ def test_logout_clears_refresh_cookie(monkeypatch):
             response = client.post("/api/auth/logout")
             assert response.status_code == 200
             assert response.json() == {"status": "ok"}
-            assert response.cookies.get("refresh_token") in (None, "")
+            refresh_cookie_headers = [
+                header
+                for header in response.headers.get_list("set-cookie")
+                if header.lower().startswith("refresh_token=")
+            ]
+            assert refresh_cookie_headers
+            refresh_cookie_header = refresh_cookie_headers[0]
+            assert refresh_cookie_header.split(";", 1)[0] in (
+                "refresh_token=",
+                'refresh_token=""',
+            )
+            assert "max-age=0" in refresh_cookie_header.lower()
         finally:
             clear_overrides()
