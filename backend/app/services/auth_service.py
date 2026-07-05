@@ -27,10 +27,12 @@ class AuthService:
             select(User).where(User.username == settings.admin_username)
         ).first()
         if user is None:
-            user = User(
-                username=settings.admin_username,
-                hashed_password=self.hash_password(settings.admin_password),
-            )
+            user = self.session.exec(select(User)).first()
+            if user is None:
+                user = User(username=settings.admin_username)
+            else:
+                user.username = settings.admin_username
+            user.hashed_password = self.hash_password(settings.admin_password)
             self.session.add(user)
             self.session.commit()
             self.session.refresh(user)
