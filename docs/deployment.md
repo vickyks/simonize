@@ -87,6 +87,8 @@ ADMIN_PASSWORD=<strong unique admin password>
 
 Production deploys fail if `DB_PASSWORD`, `SECRET_KEY`, or `ADMIN_PASSWORD` are missing or still set to the defaults from `.env.example`.
 
+`ADMIN_USERNAME` and `ADMIN_PASSWORD` are the initial app login credentials. The backend seeds the configured admin user at startup and updates that user's password hash if the environment password changes.
+
 ## Manual Production Commands
 
 Run these on the droplet from `/home/vicky/simonize`:
@@ -106,6 +108,8 @@ NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-co
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 curl -fsS http://127.0.0.1:8082/api/health
 ```
+
+Deployments must run migrations before starting the full stack. Slice 1 authentication adds the `users` table, so the backend expects Alembic to have upgraded the database before the app starts serving requests.
 
 ## Troubleshooting
 

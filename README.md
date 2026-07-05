@@ -29,7 +29,16 @@ Slice 0 is complete:
 - GitHub Actions CI
 - DigitalOcean deployment workflow
 
-The app does not yet have authentication, observations, dashboard, charts, or real recovery tracking UI.
+Slice 1 authentication is implemented:
+
+- Admin login, logout, session refresh, and current-user endpoints
+- Access tokens are held in frontend memory only
+- Session restore uses an HTTP-only refresh cookie
+- The configured admin user is seeded or updated at backend startup
+
+Initial login uses `ADMIN_USERNAME` and `ADMIN_PASSWORD` from `.env`.
+
+The app does not yet have observations, dashboard, charts, or real recovery tracking UI.
 
 ## Local Development
 
