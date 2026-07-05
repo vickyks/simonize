@@ -3,13 +3,11 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from passlib.hash import bcrypt
 from sqlmodel import Session, select
 
 from app.config import settings
 from app.models.user import User
 
-bcrypt.set_backend("os_crypt")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
