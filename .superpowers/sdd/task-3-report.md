@@ -80,3 +80,28 @@ Status: DONE
 ### Concerns
 
 - The frontend still has no component test harness, so these fixes were verified with the required static/build checks rather than component tests.
+
+## Review Fix Report: Walk Distance Independent Save
+
+Status: DONE
+
+### Files changed
+
+- `frontend/src/pages/Daily.tsx`
+
+### Fix made
+
+- Walk distance blur now saves a non-blank `walk_distance` observation even when walk time and stops are blank.
+- Walk distance metadata now includes only present non-blank `time_seconds` and `stops` keys.
+- Blank walk distance still skips save.
+
+### Checks run
+
+- `DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker-compose build frontend` - PASSED, image built and tagged `simonize_frontend:latest`.
+- `DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker-compose run --rm frontend npm run lint` - PASSED.
+- `DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker-compose run --rm frontend npm run typecheck` - PASSED.
+- `DB_PASSWORD=password SECRET_KEY=change-me-in-production ADMIN_USERNAME=simon ADMIN_PASSWORD=change-me-in-production NGINX_HTTP_PORT=80 docker-compose run --rm frontend npm run build` - PASSED, Vite built successfully with 41 modules transformed.
+
+### Concerns
+
+- The frontend has no automated component test harness, so verification is limited to the required Docker Compose build, lint, typecheck, and build checks.

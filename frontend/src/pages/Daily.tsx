@@ -86,11 +86,16 @@ export function Daily() {
     const distance = stringValue(values.walk_distance)
     const timeSeconds = stringValue(values.walk_time)
     const stops = stringValue(values.walk_stops)
-    if (isBlank(distance) || isBlank(timeSeconds) || isBlank(stops)) {
+    if (isBlank(distance)) {
       skipSave('walk_distance')
       return
     }
-    void save('walk_distance', distance, { time_seconds: timeSeconds, stops })
+
+    const metadata: Record<string, unknown> = {}
+    if (!isBlank(timeSeconds)) metadata.time_seconds = timeSeconds
+    if (!isBlank(stops)) metadata.stops = stops
+
+    void save('walk_distance', distance, Object.keys(metadata).length > 0 ? metadata : null)
   }
 
   async function save(type: ObservationType, value: string | string[], metadata: Record<string, unknown> | null = null) {
