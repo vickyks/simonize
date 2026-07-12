@@ -1,4 +1,5 @@
 import json
+import math
 from datetime import UTC, date, datetime
 from typing import Any
 
@@ -155,16 +156,23 @@ class ObservationService:
 
     def _float(self, value: Any, message: str) -> float:
         try:
-            return float(value)
+            number = float(value)
         except (TypeError, ValueError) as exc:
             raise ValidationError(message) from exc
+        if not math.isfinite(number):
+            raise ValidationError(message)
+        return number
 
     def _int(self, value: Any, message: str) -> int:
         try:
+            if isinstance(value, bool):
+                raise ValueError
             if isinstance(value, str) and value.strip() == "":
                 raise ValueError
+            if isinstance(value, float) and not value.is_integer():
+                raise ValueError
             number = int(value)
-        except (TypeError, ValueError) as exc:
+        except (OverflowError, TypeError, ValueError) as exc:
             raise ValidationError(message) from exc
         return number
 

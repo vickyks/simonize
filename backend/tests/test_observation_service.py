@@ -108,6 +108,36 @@ def test_invalid_values_raise_validation_error(observation_type, value):
             )
 
 
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_weight_rejects_non_finite_values(value):
+    with make_session() as session:
+        user = make_user(session)
+
+        with pytest.raises(ValidationError):
+            ObservationService(session).upsert(
+                user, date(2026, 6, 27), ObservationType.WEIGHT, value
+            )
+
+
+@pytest.mark.parametrize(
+    ("observation_type", "value"),
+    [
+        (ObservationType.WALK_STOPS, 1.9),
+        (ObservationType.WALK_STOPS, True),
+        (ObservationType.NYHA, 1.9),
+        (ObservationType.NYHA, True),
+    ],
+)
+def test_integer_values_reject_non_integral_numbers_and_booleans(observation_type, value):
+    with make_session() as session:
+        user = make_user(session)
+
+        with pytest.raises(ValidationError):
+            ObservationService(session).upsert(
+                user, date(2026, 6, 27), observation_type, value
+            )
+
+
 def test_walk_distance_metadata_is_preserved():
     with make_session() as session:
         user = make_user(session)
