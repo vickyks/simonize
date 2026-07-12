@@ -15,11 +15,23 @@ import { WalkInput } from '../components/inputs/WalkInput'
 import { WeightInput } from '../components/inputs/WeightInput'
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10)
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function isIsoDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00`))
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return false
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const parsed = new Date(year, month - 1, day)
+
+  return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
 }
 
 function routeDate() {
@@ -33,6 +45,14 @@ function stringValue(value: string | string[] | undefined) {
 
 function arrayValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value : []
+}
+
+function combinedWalkSaveState(saveStates: Partial<Record<ObservationType, SaveState>>): SaveState {
+  const states = [saveStates.walk_distance, saveStates.walk_time, saveStates.walk_stops]
+  if (states.includes('error')) return 'error'
+  if (states.includes('saving')) return 'saving'
+  if (states.includes('saved')) return 'saved'
+  return 'idle'
 }
 
 export function Daily() {
@@ -99,7 +119,7 @@ export function Daily() {
   }
 
   async function save(type: ObservationType, value: string | string[], metadata: Record<string, unknown> | null = null) {
-    if (!auth.accessToken) return
+    if (!auth.accessToken || !isIsoDate(date)) return
     setSaveStates((current) => ({ ...current, [type]: 'saving' }))
     try {
       await observationsApi.saveObservation(date, type, value, auth.accessToken, metadata)
@@ -124,7 +144,7 @@ export function Daily() {
       <h1>Today's Recovery</h1>
       <DailyChecklist items={daily.checklist} />
       <section><h2>Vitals</h2><div id="section-weight"><WeightInput value={stringValue(values.weight)} onChange={(value) => setValues((current) => ({ ...current, weight: value }))} onBlur={() => saveNonBlank('weight', stringValue(values.weight))} saveState={saveStates.weight ?? 'idle'} /></div><div id="section-pulse"><PulseInput value={stringValue(values.pulse)} onChange={(value) => setValues((current) => ({ ...current, pulse: value }))} onBlur={() => saveNonBlank('pulse', stringValue(values.pulse))} saveState={saveStates.pulse ?? 'idle'} /></div><div id="section-bp"><BloodPressureInput systolic={bp[0] ?? ''} diastolic={bp[1] ?? ''} onSystolicChange={(value) => setValues((current) => ({ ...current, bp: `${value}/${bp[1] ?? ''}` }))} onDiastolicChange={(value) => setValues((current) => ({ ...current, bp: `${bp[0] ?? ''}/${value}` }))} onBlur={saveBloodPressure} saveState={saveStates.bp ?? 'idle'} /></div></section>
-      <section id="section-walk_distance"><h2>Walk</h2><WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', stringValue(values.walk_time))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={saveStates.walk_distance ?? saveStates.walk_time ?? saveStates.walk_stops ?? 'idle'} /></section>
+      <section id="section-walk_distance"><h2>Walk</h2><WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', stringValue(values.walk_time))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={combinedWalkSaveState(saveStates)} /></section>
       <section id="section-songs"><h2>Guitar</h2><SongsInput value={stringValue(values.songs)} onChange={(value) => setValues((current) => ({ ...current, songs: value }))} onBlur={() => saveNonBlank('songs', stringValue(values.songs))} saveState={saveStates.songs ?? 'idle'} /></section>
       <section><h2>Symptoms</h2><div id="section-nyha"><NyhaSelector value={stringValue(values.nyha)} onSelect={(value) => { setValues((current) => ({ ...current, nyha: value })); void save('nyha', value) }} saveState={saveStates.nyha ?? 'idle'} /></div><div id="section-symptoms"><SymptomsSelector value={arrayValue(values.symptoms)} onChange={(value) => { setValues((current) => ({ ...current, symptoms: value })); void save('symptoms', value) }} saveState={saveStates.symptoms ?? 'idle'} /></div></section>
       <section id="section-notes"><h2>Notes</h2><NotesInput value={stringValue(values.notes)} onChange={(value) => setValues((current) => ({ ...current, notes: value }))} onBlur={() => save('notes', stringValue(values.notes))} saveState={saveStates.notes ?? 'idle'} /></section>
