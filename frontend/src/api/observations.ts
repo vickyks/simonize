@@ -1,3 +1,5 @@
+import { handleUnauthorized } from './auth'
+
 export type ObservationType =
   | 'weight'
   | 'pulse'
@@ -34,7 +36,7 @@ export type DailyObservations = {
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) {
-      window.history.replaceState(null, '', '/login')
+      handleUnauthorized()
     }
     throw new Error(String(response.status))
   }

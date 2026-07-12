@@ -14,7 +14,7 @@ export function NyhaSelector({ value, onSelect, saveState }: { value: string; on
       <legend>NYHA class</legend>
       <div style={{ display: 'grid', gap: '0.5rem' }}>
         {OPTIONS.map((option) => (
-          <button key={option.value} type="button" onClick={() => onSelect(option.value)} style={{ border: `2px solid ${option.color}`, background: value === option.value ? option.color : 'white', padding: '0.75rem' }}>
+          <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onSelect(option.value)} style={{ border: `2px solid ${option.color}`, background: value === option.value ? option.color : 'white', padding: '0.75rem' }}>
             {option.label}
           </button>
         ))}

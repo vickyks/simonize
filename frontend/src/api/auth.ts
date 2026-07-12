@@ -13,11 +13,15 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
   onUnauthorized = handler
 }
 
+export function handleUnauthorized() {
+  onUnauthorized?.()
+  window.history.replaceState(null, '', '/login')
+}
+
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) {
-      onUnauthorized?.()
-      window.history.replaceState(null, '', '/login')
+      handleUnauthorized()
     }
     throw new Error(String(response.status))
   }

@@ -8,7 +8,7 @@ export function SaveStatus({ state }: { state: SaveState }) {
     error: 'Could not save - try again',
   }[state]
   return (
-    <span style={{ color: state === 'error' ? '#b45309' : '#166534', fontSize: '0.875rem' }}>
+    <span aria-live="polite" style={{ color: state === 'error' ? '#b45309' : '#166534', fontSize: '0.875rem' }}>
       {message}
     </span>
   )
