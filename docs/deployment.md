@@ -109,7 +109,7 @@ NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-co
 curl -fsS http://127.0.0.1:8082/api/health
 ```
 
-Deployments must run migrations before starting the full stack. Slice 1 authentication adds the `users` table, so the backend expects Alembic to have upgraded the database before the app starts serving requests.
+Deployments must run migrations before starting the full stack. Slice 1 authentication adds the `users` table, and Slice 2 daily observations add the `observations` table, so the backend expects Alembic to have upgraded the database before the app starts serving requests.
 
 ## Troubleshooting
 

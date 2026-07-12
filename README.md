@@ -38,7 +38,13 @@ Slice 1 authentication is implemented:
 
 Initial login uses `ADMIN_USERNAME` and `ADMIN_PASSWORD` from `.env`.
 
-The app does not yet have observations, dashboard, charts, or real recovery tracking UI.
+Slice 2 daily observations are implemented:
+
+- The daily observations page is available after login at `/`
+- Historical editing uses ISO-dated paths such as `/2026-06-27`
+- Observations are scoped to the authenticated user
+
+The app does not yet have dashboard, charts, or broader recovery trend UI.
 
 ## Local Development
 
