@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.database import get_session
 from app.routers.auth import router as auth_router
+from app.routers.observations import router as observations_router
 from app.services.auth_service import AuthService
 
 
@@ -21,6 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Simonizer API", lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(observations_router)
 
 
 @app.get("/health")
