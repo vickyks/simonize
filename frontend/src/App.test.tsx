@@ -38,6 +38,17 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { name: 'Dashboard route' })).toBeInTheDocument()
   })
 
+  it('redirects authenticated /login visits to /dashboard', () => {
+    window.history.replaceState(null, '', '/login')
+    const replaceState = vi.spyOn(window.history, 'replaceState')
+
+    render(<App />)
+
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/dashboard')
+    expect(window.location.pathname).toBe('/dashboard')
+    expect(screen.getByRole('heading', { name: 'Dashboard route' })).toBeInTheDocument()
+  })
+
   it('renders daily observations at /', () => {
     window.history.replaceState(null, '', '/')
 
