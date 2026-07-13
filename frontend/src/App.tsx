@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from './auth/AuthContext'
+import { Daily } from './pages/Daily'
 import { Login } from './pages/Login'
 
 function AppContent() {
@@ -17,17 +18,13 @@ function AppContent() {
   }
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div>
-          <h1>Simonizer</h1>
-          <p>Signed in as {auth.username}</p>
-        </div>
-        <button type="button" onClick={() => void auth.logout()}>
-          Log out
-        </button>
+    <>
+      <header style={{ display: 'flex', justifyContent: 'space-between', margin: '1rem 2rem', fontFamily: 'system-ui, sans-serif' }}>
+        <strong>Simonizer</strong>
+        <button type="button" onClick={() => void auth.logout()}>Log out</button>
       </header>
-    </main>
+      <Daily />
+    </>
   )
 }
 
