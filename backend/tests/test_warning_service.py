@@ -93,6 +93,35 @@ def test_amber_for_pulse_average_rise():
     )
 
 
+def test_pulse_average_rise_uses_all_readings_in_latest_calendar_three_day_window():
+    result = WarningService().evaluate(
+        today={},
+        recent=[
+            DailyWarningObservations(
+                date=date(2026, 7, 7), values={ObservationType.PULSE: 70}
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 8), values={ObservationType.PULSE: 72}
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 11), values={ObservationType.PULSE: 104}
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 12), values={ObservationType.PULSE: 70}
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 13), values={ObservationType.PULSE: 71}
+            ),
+        ],
+    )
+
+    assert result.status == "amber"
+    assert (
+        "Your resting pulse average has increased by more than 10 BPM over 7 days."
+        in result.messages
+    )
+
+
 def test_amber_for_walk_distance_falling():
     result = WarningService().evaluate(
         today={},

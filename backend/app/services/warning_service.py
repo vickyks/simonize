@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 from app.models.observation import ObservationType
@@ -96,18 +96,29 @@ class WarningService:
             for day in recent
             if self._is_int(value := day.values.get(ObservationType.PULSE))
         ]
-        readings.sort(key=lambda item: item[0])
-        if len(readings) < 4:
+        readings_by_date = dict(sorted(readings, key=lambda item: item[0]))
+        if len(readings_by_date) < 2:
             return False
 
-        # Compare earliest/latest available readings when each side has two readings.
-        earliest = readings[:2]
-        latest = readings[-2:]
-        if len(earliest) < 2 or len(latest) < 2:
+        window_averages: list[tuple[date, float]] = []
+        first_date = min(readings_by_date)
+        last_date = max(readings_by_date)
+        current_date = first_date
+        while current_date <= last_date - timedelta(days=2):
+            values = [
+                value
+                for reading_date, value in readings_by_date.items()
+                if 0 <= (reading_date - current_date).days <= 2
+            ]
+            if len(values) >= 2:
+                window_averages.append((current_date, sum(values) / len(values)))
+            current_date += timedelta(days=1)
+
+        if len(window_averages) < 2:
             return False
 
-        earliest_average = sum(value for _, value in earliest) / len(earliest)
-        latest_average = sum(value for _, value in latest) / len(latest)
+        earliest_average = window_averages[0][1]
+        latest_average = window_averages[-1][1]
         return latest_average - earliest_average > 10
 
     def _walk_distance_falling(self, recent: list[DailyWarningObservations]) -> bool:
