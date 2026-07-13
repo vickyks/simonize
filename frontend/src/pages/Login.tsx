@@ -13,7 +13,7 @@ export function Login() {
     setError(null)
     try {
       await auth.login(username, password)
-      window.history.replaceState(null, '', '/')
+      window.history.replaceState(null, '', '/dashboard')
     } catch {
       setError('That username or password did not work.')
     }
