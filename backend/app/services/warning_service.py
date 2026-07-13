@@ -94,12 +94,13 @@ class WarningService:
         readings = [
             (day.date, value)
             for day in recent
-            if isinstance(value := day.values.get(ObservationType.PULSE), int)
+            if self._is_int(value := day.values.get(ObservationType.PULSE))
         ]
         readings.sort(key=lambda item: item[0])
         if len(readings) < 4:
             return False
 
+        # Compare earliest/latest available readings when each side has two readings.
         earliest = readings[:2]
         latest = readings[-2:]
         if len(earliest) < 2 or len(latest) < 2:
@@ -113,7 +114,7 @@ class WarningService:
         readings = [
             (day.date, value)
             for day in recent
-            if isinstance(value := day.values.get(ObservationType.WALK_DISTANCE), int)
+            if self._is_int(value := day.values.get(ObservationType.WALK_DISTANCE))
         ]
         readings.sort(key=lambda item: item[0])
         if len(readings) < 3:
@@ -129,7 +130,7 @@ class WarningService:
         readings = [
             (day.date, value)
             for day in recent
-            if isinstance(value := day.values.get(ObservationType.NYHA), int)
+            if self._is_int(value := day.values.get(ObservationType.NYHA))
         ]
         readings.sort(key=lambda item: item[0])
 
@@ -152,7 +153,7 @@ class WarningService:
             symptoms = day.values.get(ObservationType.SYMPTOMS)
             if not isinstance(symptoms, list):
                 continue
-            for symptom in symptoms:
+            for symptom in set(symptoms):
                 if isinstance(symptom, str) and symptom != "good_day":
                     counts[symptom] = counts.get(symptom, 0) + 1
 
@@ -168,7 +169,7 @@ class WarningService:
         readings = [
             (day.date, value)
             for day in recent
-            if isinstance(value := day.values.get(ObservationType.WEIGHT), int | float)
+            if self._is_number(value := day.values.get(ObservationType.WEIGHT))
         ]
         readings.sort(key=lambda item: item[0])
 
@@ -178,3 +179,11 @@ class WarningService:
                 if 0 < days <= max_days and end_weight - start_weight >= threshold:
                     return True
         return False
+
+    @staticmethod
+    def _is_int(value: object) -> bool:
+        return isinstance(value, int) and not isinstance(value, bool)
+
+    @staticmethod
+    def _is_number(value: object) -> bool:
+        return isinstance(value, int | float) and not isinstance(value, bool)

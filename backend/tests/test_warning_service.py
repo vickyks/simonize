@@ -163,6 +163,65 @@ def test_amber_for_repeated_symptom_excluding_good_day():
     assert "Breathless was recorded on 3 of the last 7 days." in result.messages
 
 
+def test_repeated_symptom_counts_at_most_once_per_day():
+    result = WarningService().evaluate(
+        today={},
+        recent=[
+            DailyWarningObservations(
+                date=date(2026, 7, 11),
+                values={ObservationType.SYMPTOMS: ["breathless", "breathless"]},
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 12),
+                values={ObservationType.SYMPTOMS: ["breathless"]},
+            ),
+        ],
+    )
+
+    assert result.status == "green"
+    assert result.messages == []
+
+
+def test_bool_values_do_not_trigger_numeric_warnings():
+    result = WarningService().evaluate(
+        today={ObservationType.NYHA: True},
+        recent=[
+            DailyWarningObservations(
+                date=date(2026, 7, 10), values={ObservationType.WEIGHT: True}
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 11),
+                values={
+                    ObservationType.WEIGHT: 3.0,
+                    ObservationType.PULSE: True,
+                    ObservationType.WALK_DISTANCE: True,
+                    ObservationType.NYHA: True,
+                },
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 12),
+                values={
+                    ObservationType.WEIGHT: False,
+                    ObservationType.PULSE: True,
+                    ObservationType.WALK_DISTANCE: True,
+                    ObservationType.NYHA: True,
+                },
+            ),
+            DailyWarningObservations(
+                date=date(2026, 7, 13),
+                values={
+                    ObservationType.PULSE: True,
+                    ObservationType.WALK_DISTANCE: False,
+                    ObservationType.NYHA: True,
+                },
+            ),
+        ],
+    )
+
+    assert result.status == "green"
+    assert result.messages == []
+
+
 def test_green_when_no_warning_conditions_or_not_enough_data():
     result = WarningService().evaluate(
         today={ObservationType.WEIGHT: 92.0},
