@@ -1,8 +1,7 @@
-from sqlmodel import Session, SQLModel, create_engine, select
-
 from app.config import settings
 from app.models.user import User
 from app.services.auth_service import AuthService
+from sqlmodel import Session, SQLModel, create_engine, select
 
 
 def make_session():
@@ -21,7 +20,9 @@ def test_seed_admin_user_creates_user(monkeypatch):
         assert user.username == "simon"
         assert user.is_seeded is True
         assert user.hashed_password != "secret-password"
-        assert AuthService(session).verify_password("secret-password", user.hashed_password)
+        assert AuthService(session).verify_password(
+            "secret-password", user.hashed_password
+        )
 
 
 def test_seed_admin_user_updates_password(monkeypatch):

@@ -5,16 +5,16 @@ Revises: 20260704_0001
 Create Date: 2026-07-12
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "20260712_0002"
-down_revision: Union[str, None] = "20260704_0001"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "20260704_0001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -30,7 +30,9 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("user_id", "date", "type", name="uq_observations_user_date_type"),
+        sa.UniqueConstraint(
+            "user_id", "date", "type", name="uq_observations_user_date_type"
+        ),
     )
     op.create_index("ix_observations_user_id", "observations", ["user_id"])
     op.create_index("ix_observations_date", "observations", ["date"])

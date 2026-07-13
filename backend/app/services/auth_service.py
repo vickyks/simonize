@@ -65,7 +65,9 @@ class AuthService:
             expires_delta=timedelta(days=settings.refresh_token_expire_days),
         )
 
-    def get_user_from_token(self, token: str, token_type: str = "access") -> User | None:
+    def get_user_from_token(
+        self, token: str, token_type: str = "access"
+    ) -> User | None:
         try:
             payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
             if payload.get("type") != token_type:
@@ -78,7 +80,9 @@ class AuthService:
             return None
         return self.session.get(User, user_id)
 
-    def _create_token(self, user: User, token_type: str, expires_delta: timedelta) -> str:
+    def _create_token(
+        self, user: User, token_type: str, expires_delta: timedelta
+    ) -> str:
         expires_at = datetime.now(UTC) + expires_delta
         payload = {"sub": str(user.id), "type": token_type, "exp": expires_at}
         return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)

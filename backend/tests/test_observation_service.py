@@ -1,12 +1,11 @@
 from datetime import date
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine, select
-from sqlmodel.pool import StaticPool
-
 from app.models.observation import Observation, ObservationType
 from app.models.user import User
 from app.services.observation_service import ObservationService, ValidationError
+from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel.pool import StaticPool
 
 
 def make_session():
@@ -128,7 +127,9 @@ def test_weight_rejects_non_finite_values(value):
         (ObservationType.NYHA, True),
     ],
 )
-def test_integer_values_reject_non_integral_numbers_and_booleans(observation_type, value):
+def test_integer_values_reject_non_integral_numbers_and_booleans(
+    observation_type, value
+):
     with make_session() as session:
         user = make_user(session)
 

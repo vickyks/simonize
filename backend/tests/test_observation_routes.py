@@ -1,15 +1,14 @@
 from datetime import date
 
-from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
-
 from app.database import get_session
 from app.main import app
 from app.models.observation import ObservationType
 from app.models.user import User
 from app.services.auth_service import AuthService
 from app.services.observation_service import ObservationService
+from fastapi.testclient import TestClient
+from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel.pool import StaticPool
 
 
 def make_session():
@@ -35,7 +34,10 @@ def clear_overrides():
 
 
 def seed_user(session: Session, username: str = "simon") -> User:
-    user = User(username=username, hashed_password=AuthService(session).hash_password("secret-password"))
+    user = User(
+        username=username,
+        hashed_password=AuthService(session).hash_password("secret-password"),
+    )
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -60,7 +62,9 @@ def test_put_observation_requires_auth():
     with make_session() as session:
         client = make_client(session)
         try:
-            response = client.put("/api/observations/2026-06-27/weight", json={"value": "92.3"})
+            response = client.put(
+                "/api/observations/2026-06-27/weight", json={"value": "92.3"}
+            )
             assert response.status_code == 401
         finally:
             clear_overrides()
@@ -95,7 +99,9 @@ def test_routes_are_scoped_to_current_user():
     with make_session() as session:
         simon = seed_user(session, "simon")
         vicky = seed_user(session, "vicky")
-        ObservationService(session).upsert(simon, date(2026, 6, 27), ObservationType.WEIGHT, "92.3")
+        ObservationService(session).upsert(
+            simon, date(2026, 6, 27), ObservationType.WEIGHT, "92.3"
+        )
         client = make_client(session)
         headers = {"Authorization": f"Bearer {token_for(session, vicky)}"}
         try:

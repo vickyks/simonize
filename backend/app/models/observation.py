@@ -1,5 +1,6 @@
 import uuid
-from datetime import UTC, date as date_type, datetime
+from datetime import UTC, datetime
+from datetime import date as date_type
 from enum import StrEnum
 
 from sqlalchemy import JSON, Column, UniqueConstraint
@@ -22,7 +23,9 @@ class ObservationType(StrEnum):
 class Observation(SQLModel, table=True):
     __tablename__ = "observations"
     __table_args__ = (
-        UniqueConstraint("user_id", "date", "type", name="uq_observations_user_date_type"),
+        UniqueConstraint(
+            "user_id", "date", "type", name="uq_observations_user_date_type"
+        ),
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -34,5 +37,9 @@ class Observation(SQLModel, table=True):
         default=None,
         sa_column=Column("metadata", JSON, nullable=True),
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), nullable=False
+    )

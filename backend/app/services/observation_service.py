@@ -8,7 +8,6 @@ from sqlmodel import Session, select
 from app.models.observation import Observation, ObservationType
 from app.models.user import User
 
-
 VALID_SYMPTOMS = {
     "breathless",
     "chest_discomfort",
@@ -90,7 +89,8 @@ class ObservationService:
             number = self._float(value, "Weight must be a number")
             if number < 30.0 or number > 300.0:
                 raise ValidationError("Weight must be between 30 and 300 kg")
-            return str(number).rstrip("0").rstrip(".") if "." in str(number) else str(number)
+            text = str(number)
+            return text.rstrip("0").rstrip(".") if "." in text else text
         if observation_type in {
             ObservationType.PULSE,
             ObservationType.WALK_DISTANCE,
@@ -101,7 +101,11 @@ class ObservationService:
         }:
             number = self._int(value, f"{observation_type.value} must be an integer")
             ranges = {
-                ObservationType.PULSE: (30, 250, "Pulse must be between 30 and 250 BPM"),
+                ObservationType.PULSE: (
+                    30,
+                    250,
+                    "Pulse must be between 30 and 250 BPM",
+                ),
                 ObservationType.WALK_DISTANCE: (
                     0,
                     50000,
@@ -112,7 +116,11 @@ class ObservationService:
                     86400,
                     "Walk time must be between 0 and 86400 seconds",
                 ),
-                ObservationType.WALK_STOPS: (0, 100, "Walk stops must be between 0 and 100"),
+                ObservationType.WALK_STOPS: (
+                    0,
+                    100,
+                    "Walk stops must be between 0 and 100",
+                ),
                 ObservationType.SONGS: (0, 100, "Songs must be between 0 and 100"),
                 ObservationType.NYHA: (1, 4, "NYHA class must be between 1 and 4"),
             }
@@ -151,7 +159,9 @@ class ObservationService:
                 metadata["time_seconds"], "Walk time must be an integer"
             )
         if "stops" in metadata and metadata["stops"] not in (None, ""):
-            clean["stops"] = self._int(metadata["stops"], "Walk stops must be an integer")
+            clean["stops"] = self._int(
+                metadata["stops"], "Walk stops must be an integer"
+            )
         return clean or None
 
     def _float(self, value: Any, message: str) -> float:
@@ -180,18 +190,26 @@ class ObservationService:
         if not isinstance(value, str) or "/" not in value:
             raise ValidationError("Blood pressure must use SYS/DIA format")
         systolic_text, diastolic_text = value.split("/", 1)
-        systolic = self._int(systolic_text, "Systolic blood pressure must be an integer")
-        diastolic = self._int(diastolic_text, "Diastolic blood pressure must be an integer")
+        systolic = self._int(
+            systolic_text, "Systolic blood pressure must be an integer"
+        )
+        diastolic = self._int(
+            diastolic_text, "Diastolic blood pressure must be an integer"
+        )
         if systolic < 60 or systolic > 250:
             raise ValidationError("Systolic blood pressure must be between 60 and 250")
         if diastolic < 40 or diastolic > 150:
             raise ValidationError("Diastolic blood pressure must be between 40 and 150")
         if systolic <= diastolic:
-            raise ValidationError("Systolic blood pressure must be higher than diastolic")
+            raise ValidationError(
+                "Systolic blood pressure must be higher than diastolic"
+            )
         return systolic, diastolic
 
     def _parse_symptoms(self, value: Any) -> list[str]:
-        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) for item in value
+        ):
             raise ValidationError("Symptoms must be a list")
         unknown = set(value) - VALID_SYMPTOMS
         if unknown:

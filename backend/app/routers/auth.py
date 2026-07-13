@@ -1,9 +1,16 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
 from sqlmodel import Session
 
 from app.database import get_session
 from app.models.user import User
-from app.schemas.auth import CurrentUserResponse, LoginRequest, StatusResponse, TokenResponse
+from app.schemas.auth import (
+    CurrentUserResponse,
+    LoginRequest,
+    StatusResponse,
+    TokenResponse,
+)
 from app.services.auth_service import AuthService
 
 REFRESH_COOKIE_NAME = "refresh_token"
@@ -27,8 +34,8 @@ def clear_refresh_cookie(response: Response) -> None:
 
 
 def current_user(
-    authorization: str | None = Header(default=None),
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
+    authorization: Annotated[str | None, Header()] = None,
 ) -> User:
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -43,7 +50,7 @@ def current_user(
 async def login(
     request: LoginRequest,
     response: Response,
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ) -> TokenResponse:
     service = AuthService(session)
     user = service.authenticate(request.username, request.password)
@@ -56,8 +63,8 @@ async def login(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
     response: Response,
-    refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
+    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)] = None,
 ) -> TokenResponse:
     if refresh_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -76,5 +83,7 @@ async def logout(response: Response) -> StatusResponse:
 
 
 @router.get("/me", response_model=CurrentUserResponse)
-async def me(user: User = Depends(current_user)) -> CurrentUserResponse:
+async def me(
+    user: Annotated[User, Depends(current_user)],
+) -> CurrentUserResponse:
     return CurrentUserResponse(username=user.username)

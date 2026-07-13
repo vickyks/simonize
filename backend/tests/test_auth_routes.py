@@ -1,11 +1,10 @@
-from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
-
 from app.config import settings
 from app.database import get_session
 from app.main import app
 from app.services.auth_service import AuthService
+from fastapi.testclient import TestClient
+from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel.pool import StaticPool
 
 
 def make_session():

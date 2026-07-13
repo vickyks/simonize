@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -32,8 +33,8 @@ CHECKLIST = [
 @router.get("/{day}", response_model=DailyObservationsResponse)
 async def get_observations(
     day: date,
-    user: User = Depends(current_user),
-    session: Session = Depends(get_session),
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> DailyObservationsResponse:
     service = ObservationService(session)
     observations = service.get_for_date(user, day)
@@ -61,8 +62,8 @@ async def put_observation(
     day: date,
     observation_type: ObservationType,
     request: ObservationUpsertRequest,
-    user: User = Depends(current_user),
-    session: Session = Depends(get_session),
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> ObservationResponse:
     service = ObservationService(session)
     try:
