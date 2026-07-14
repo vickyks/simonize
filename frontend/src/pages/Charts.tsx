@@ -161,14 +161,22 @@ export function Charts({ accessToken }: ChartsProps) {
   const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
+    let active = true
+
     chartsApi.getCharts(accessToken, range)
       .then((data) => {
+        if (!active) return
         setCharts(data)
         setLoadError(false)
       })
       .catch((error: Error) => {
+        if (!active) return
         if (error.message !== '401') setLoadError(true)
       })
+
+    return () => {
+      active = false
+    }
   }, [accessToken, range])
 
   if (loadError) return <main><h1>Could not load charts</h1><p>Please try again.</p></main>
