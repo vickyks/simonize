@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from './auth/AuthContext'
+import { Charts } from './pages/Charts'
 import { Dashboard } from './pages/Dashboard'
 import { Daily } from './pages/Daily'
 import { Login } from './pages/Login'
@@ -18,7 +19,9 @@ function AppContent() {
     window.history.replaceState(null, '', '/dashboard')
   }
 
-  const showDashboard = window.location.pathname === '/dashboard'
+  const pathname = window.location.pathname
+  const showDashboard = pathname === '/dashboard'
+  const showCharts = pathname === '/charts'
 
   return (
     <>
@@ -27,10 +30,13 @@ function AppContent() {
         <nav style={{ display: 'flex', gap: '1rem' }} aria-label="Main navigation">
           <a href="/dashboard">Dashboard</a>
           <a href="/">Today</a>
+          <a href="/charts">Charts</a>
         </nav>
         <button type="button" onClick={() => void auth.logout()}>Log out</button>
       </header>
-      {showDashboard ? <Dashboard accessToken={auth.accessToken ?? ''} /> : <Daily />}
+      {showDashboard ? <Dashboard accessToken={auth.accessToken ?? ''} /> : null}
+      {showCharts ? <Charts accessToken={auth.accessToken ?? ''} /> : null}
+      {!showDashboard && !showCharts ? <Daily /> : null}
     </>
   )
 }

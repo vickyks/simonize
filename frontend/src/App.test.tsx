@@ -24,6 +24,10 @@ vi.mock('./pages/Daily', () => ({
   Daily: () => <main><h1>Daily route</h1></main>,
 }))
 
+vi.mock('./pages/Charts', () => ({
+  Charts: () => <main><h1>Charts route</h1></main>,
+}))
+
 describe('App routing', () => {
   afterEach(() => {
     cleanup()
@@ -55,5 +59,21 @@ describe('App routing', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Daily route' })).toBeInTheDocument()
+  })
+
+  it('renders charts at /charts', () => {
+    window.history.replaceState(null, '', '/charts')
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Charts route' })).toBeInTheDocument()
+  })
+
+  it('shows a Charts navigation link', () => {
+    window.history.replaceState(null, '', '/dashboard')
+
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: 'Charts' })).toHaveAttribute('href', '/charts')
   })
 })
