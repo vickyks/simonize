@@ -28,6 +28,10 @@ vi.mock('./pages/Charts', () => ({
   Charts: () => <main><h1>Charts route</h1></main>,
 }))
 
+vi.mock('./pages/Doctor', () => ({
+  Doctor: () => <main><h1>Doctor route</h1></main>,
+}))
+
 describe('App routing', () => {
   afterEach(() => {
     cleanup()
@@ -69,11 +73,27 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { name: 'Charts route' })).toBeInTheDocument()
   })
 
+  it('renders doctor at /doctor', () => {
+    window.history.replaceState(null, '', '/doctor')
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Doctor route' })).toBeInTheDocument()
+  })
+
   it('shows a Charts navigation link', () => {
     window.history.replaceState(null, '', '/dashboard')
 
     render(<App />)
 
     expect(screen.getByRole('link', { name: 'Charts' })).toHaveAttribute('href', '/charts')
+  })
+
+  it('shows a Doctor navigation link', () => {
+    window.history.replaceState(null, '', '/dashboard')
+
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: 'Doctor' })).toHaveAttribute('href', '/doctor')
   })
 })

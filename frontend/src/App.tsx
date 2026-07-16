@@ -2,6 +2,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext'
 import { Charts } from './pages/Charts'
 import { Dashboard } from './pages/Dashboard'
 import { Daily } from './pages/Daily'
+import { Doctor } from './pages/Doctor'
 import { Login } from './pages/Login'
 
 function AppContent() {
@@ -22,6 +23,7 @@ function AppContent() {
   const pathname = window.location.pathname
   const showDashboard = pathname === '/dashboard'
   const showCharts = pathname === '/charts'
+  const showDoctor = pathname === '/doctor'
 
   return (
     <>
@@ -31,12 +33,14 @@ function AppContent() {
           <a href="/dashboard">Dashboard</a>
           <a href="/">Today</a>
           <a href="/charts">Charts</a>
+          <a href="/doctor">Doctor</a>
         </nav>
         <button type="button" onClick={() => void auth.logout()}>Log out</button>
       </header>
       {showDashboard ? <Dashboard accessToken={auth.accessToken ?? ''} /> : null}
       {showCharts ? <Charts accessToken={auth.accessToken ?? ''} /> : null}
-      {!showDashboard && !showCharts ? <Daily /> : null}
+      {showDoctor ? <Doctor accessToken={auth.accessToken ?? ''} /> : null}
+      {!showDashboard && !showCharts && !showDoctor ? <Daily /> : null}
     </>
   )
 }
