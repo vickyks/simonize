@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Daily } from './Daily'
@@ -65,10 +65,46 @@ describe('Daily', () => {
     expect(screen.getByLabelText('SYS')).toHaveClass('input-control')
     expect(screen.getByLabelText('DIA')).toHaveClass('input-control')
     expect(screen.getByLabelText('Distance (m)')).toHaveClass('input-control')
-    expect(screen.getByLabelText('Time (seconds)')).toHaveClass('input-control')
+    expect(screen.getByLabelText('Time (minutes)')).toHaveClass('input-control')
     expect(screen.getByLabelText('Stops')).toHaveClass('input-control')
     expect(screen.getByLabelText('Guitar songs')).toHaveClass('input-control')
     expect(screen.getByLabelText('Notes')).toHaveClass('input-control min-h-36 resize-y')
     expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument()
+  })
+
+  it('displays walk time in minutes and saves it as seconds', async () => {
+    const fetch = vi.fn((input: RequestInfo | URL) => {
+      if (String(input).endsWith('/walk_time')) {
+        return Promise.resolve({ ok: true, json: async () => ({}) })
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          date: '2026-07-20',
+          observations: {
+            walk_time: { type: 'walk_time', value: '840', metadata: null, updated_at: '2026-07-20T08:00:00Z' },
+          },
+          checklist: [],
+        }),
+      })
+    })
+    vi.stubGlobal('fetch', fetch)
+    window.history.replaceState(null, '', '/2026-07-20')
+
+    render(<Daily />)
+
+    const time = await screen.findByLabelText('Time (minutes)')
+    expect(time).toHaveValue('14')
+
+    fireEvent.change(time, { target: { value: '15' } })
+    fireEvent.blur(time)
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/observations/2026-07-20/walk_time',
+        expect.objectContaining({ body: JSON.stringify({ value: '900', metadata: null }) }),
+      )
+    })
   })
 })

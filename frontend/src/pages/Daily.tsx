@@ -48,6 +48,27 @@ function arrayValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value : []
 }
 
+function isBlankString(value: string) {
+  return value.trim() === ''
+}
+
+function secondsToMinutesValue(value: string | string[] | undefined) {
+  const rawValue = stringValue(value)
+  if (isBlankString(rawValue)) return ''
+
+  const seconds = Number(rawValue)
+  if (!Number.isFinite(seconds)) return rawValue
+  return String(Math.round(seconds / 60))
+}
+
+function minutesToSecondsValue(value: string) {
+  if (isBlankString(value)) return ''
+
+  const minutes = Number(value)
+  if (!Number.isFinite(minutes)) return value
+  return String(Math.round(minutes * 60))
+}
+
 function combinedWalkSaveState(saveStates: Partial<Record<ObservationType, SaveState>>): SaveState {
   const states = [saveStates.walk_distance, saveStates.walk_time, saveStates.walk_stops]
   if (states.includes('error')) return 'error'
@@ -69,7 +90,10 @@ export function Daily() {
     observationsApi.getDailyObservations(date, auth.accessToken)
       .then((data) => {
         setDaily(data)
-        setValues(Object.fromEntries(Object.entries(data.observations).map(([key, observation]) => [key, observation.value])))
+        setValues(Object.fromEntries(Object.entries(data.observations).map(([key, observation]) => [
+          key,
+          key === 'walk_time' ? secondsToMinutesValue(observation.value) : observation.value,
+        ])))
         setLoadError(false)
       })
       .catch((error: Error) => {
@@ -78,7 +102,7 @@ export function Daily() {
   }, [auth.accessToken, date])
 
   function isBlank(value: string) {
-    return value.trim() === ''
+    return isBlankString(value)
   }
 
   function skipSave(type: ObservationType) {
@@ -105,7 +129,7 @@ export function Daily() {
 
   function saveWalkDistance() {
     const distance = stringValue(values.walk_distance)
-    const timeSeconds = stringValue(values.walk_time)
+    const timeSeconds = minutesToSecondsValue(stringValue(values.walk_time))
     const stops = stringValue(values.walk_stops)
     if (isBlank(distance)) {
       skipSave('walk_distance')
@@ -163,7 +187,7 @@ export function Daily() {
       </SectionCard>
       <SectionCard className="scroll-mt-6" id="section-walk_distance">
         <h2 className="section-title mb-4">Walk</h2>
-        <WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', stringValue(values.walk_time))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={combinedWalkSaveState(saveStates)} />
+        <WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', minutesToSecondsValue(stringValue(values.walk_time)))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={combinedWalkSaveState(saveStates)} />
       </SectionCard>
       <SectionCard className="scroll-mt-6" id="section-songs">
         <h2 className="section-title mb-4">Guitar</h2>

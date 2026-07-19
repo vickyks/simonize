@@ -10,7 +10,7 @@ export function WalkInput({ distance, timeSeconds, stops, onDistanceChange, onTi
         <input className="input-control" value={distance} inputMode="numeric" onChange={(event) => onDistanceChange(event.target.value)} onBlur={onDistanceBlur} />
       </label>
       <label className="field-label">
-        Time (seconds)
+        Time (minutes)
         <input className="input-control" value={timeSeconds} inputMode="numeric" onChange={(event) => onTimeSecondsChange(event.target.value)} onBlur={onTimeSecondsBlur} />
       </label>
       <label className="field-label">
