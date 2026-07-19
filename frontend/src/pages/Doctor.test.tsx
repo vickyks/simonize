@@ -47,6 +47,7 @@ describe('Doctor', () => {
     expect(screen.getByText('Blood Pressure')).toBeInTheDocument()
     expect(screen.getByText('Walk')).toBeInTheDocument()
     expect(screen.getByText('Symptoms')).toBeInTheDocument()
+    expect(screen.getByText('14 min')).toBeInTheDocument()
     expect(screen.getByText('Felt stronger today')).toBeInTheDocument()
     expect(screen.getByText('Breathless')).toBeInTheDocument()
     expect(screen.getByText('Good day')).toBeInTheDocument()

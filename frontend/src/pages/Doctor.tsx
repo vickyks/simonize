@@ -44,6 +44,14 @@ function formatDate(value: string) {
   })
 }
 
+function formatDuration(seconds: number | null) {
+  if (seconds === null) return '-'
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  if (remainingSeconds === 0) return `${minutes} min`
+  return `${minutes} min ${remainingSeconds} sec`
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="doctor-section">
@@ -172,7 +180,7 @@ function WalkSection({ rows }: { rows: SummaryWalkPoint[] }) {
                 <tr key={row.date}>
                   <td>{formatDate(row.date)}</td>
                   <td>{row.distance} m</td>
-                  <td>{row.time_seconds ?? '-'}</td>
+                  <td>{formatDuration(row.time_seconds)}</td>
                   <td>{row.stops ?? '-'}</td>
                 </tr>
               ))}
