@@ -1,3 +1,4 @@
+import { classes } from '../ui/PageShell'
 import type { SaveState } from './SaveStatus'
 import { SaveStatus } from './SaveStatus'
 
@@ -24,13 +25,25 @@ export function SymptomsSelector({ value, onChange, saveState }: { value: string
   }
 
   return (
-    <fieldset>
-      <legend>Symptoms</legend>
-      {SYMPTOMS.map((symptom) => (
-        <label key={symptom.key} style={{ display: 'block' }}>
-          <input type="checkbox" checked={value.includes(symptom.key)} onChange={() => toggle(symptom.key)} /> {symptom.label}
+    <fieldset className="grid gap-3">
+      <legend className="field-label mb-1">Symptoms</legend>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {SYMPTOMS.map((symptom) => (
+        <label
+          key={symptom.key}
+          className={classes(
+            'flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-base font-semibold transition',
+            symptom.key === 'good_day' && value.includes(symptom.key) ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : null,
+            symptom.key === 'good_day' && !value.includes(symptom.key) ? 'border-emerald-400 bg-white text-emerald-900' : null,
+            symptom.key !== 'good_day' && value.includes(symptom.key) ? 'border-clinical-primary bg-blue-50 text-slate-950' : null,
+            symptom.key !== 'good_day' && !value.includes(symptom.key) ? 'border-slate-200 bg-white text-slate-700' : null,
+          )}
+        >
+          <input className="h-4 w-4 accent-clinical-primary" type="checkbox" checked={value.includes(symptom.key)} onChange={() => toggle(symptom.key)} />
+          {symptom.label}
         </label>
-      ))}
+        ))}
+      </div>
       <SaveStatus state={saveState} />
     </fieldset>
   )

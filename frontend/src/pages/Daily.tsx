@@ -13,6 +13,7 @@ import { SongsInput } from '../components/inputs/SongsInput'
 import { SymptomsSelector } from '../components/inputs/SymptomsSelector'
 import { WalkInput } from '../components/inputs/WalkInput'
 import { WeightInput } from '../components/inputs/WeightInput'
+import { PageHeader, PageShell, SectionCard } from '../components/ui/PageShell'
 
 function todayIso() {
   const today = new Date()
@@ -131,23 +132,56 @@ export function Daily() {
     }
   }
 
-  if (!isIsoDate(date)) return <main><h1>That date does not look right</h1><a href="/">Go to today</a></main>
-  if (loadError) return <main><h1>Could not load observations</h1><p>Please try again.</p></main>
-  if (!daily) return <p>Loading...</p>
+  if (!isIsoDate(date)) return <PageShell><SectionCard><h1 className="section-title">That date does not look right</h1><a href="/">Go to today</a></SectionCard></PageShell>
+  if (loadError) return <PageShell><SectionCard><h1 className="section-title">Could not load observations</h1><p className="page-copy">Please try again.</p></SectionCard></PageShell>
+  if (!daily) return <PageShell><SectionCard><p className="page-copy">Loading...</p></SectionCard></PageShell>
 
   const bp = stringValue(values.bp).split('/')
   const historical = date !== todayIso()
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem', display: 'grid', gap: '1.5rem' }}>
-      {historical ? <aside style={{ background: '#fef3c7', padding: '1rem', borderRadius: '0.75rem' }}>You are editing {date}. <a href="/">Go to today</a></aside> : null}
-      <h1>Today's Recovery</h1>
-      <DailyChecklist items={daily.checklist} />
-      <section><h2>Vitals</h2><div id="section-weight"><WeightInput value={stringValue(values.weight)} onChange={(value) => setValues((current) => ({ ...current, weight: value }))} onBlur={() => saveNonBlank('weight', stringValue(values.weight))} saveState={saveStates.weight ?? 'idle'} /></div><div id="section-pulse"><PulseInput value={stringValue(values.pulse)} onChange={(value) => setValues((current) => ({ ...current, pulse: value }))} onBlur={() => saveNonBlank('pulse', stringValue(values.pulse))} saveState={saveStates.pulse ?? 'idle'} /></div><div id="section-bp"><BloodPressureInput systolic={bp[0] ?? ''} diastolic={bp[1] ?? ''} onSystolicChange={(value) => setValues((current) => ({ ...current, bp: `${value}/${bp[1] ?? ''}` }))} onDiastolicChange={(value) => setValues((current) => ({ ...current, bp: `${bp[0] ?? ''}/${value}` }))} onBlur={saveBloodPressure} saveState={saveStates.bp ?? 'idle'} /></div></section>
-      <section id="section-walk_distance"><h2>Walk</h2><WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', stringValue(values.walk_time))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={combinedWalkSaveState(saveStates)} /></section>
-      <section id="section-songs"><h2>Guitar</h2><SongsInput value={stringValue(values.songs)} onChange={(value) => setValues((current) => ({ ...current, songs: value }))} onBlur={() => saveNonBlank('songs', stringValue(values.songs))} saveState={saveStates.songs ?? 'idle'} /></section>
-      <section><h2>Symptoms</h2><div id="section-nyha"><NyhaSelector value={stringValue(values.nyha)} onSelect={(value) => { setValues((current) => ({ ...current, nyha: value })); void save('nyha', value) }} saveState={saveStates.nyha ?? 'idle'} /></div><div id="section-symptoms"><SymptomsSelector value={arrayValue(values.symptoms)} onChange={(value) => { setValues((current) => ({ ...current, symptoms: value })); void save('symptoms', value) }} saveState={saveStates.symptoms ?? 'idle'} /></div></section>
-      <section id="section-notes"><h2>Notes</h2><NotesInput value={stringValue(values.notes)} onChange={(value) => setValues((current) => ({ ...current, notes: value }))} onBlur={() => save('notes', stringValue(values.notes))} saveState={saveStates.notes ?? 'idle'} /></section>
-    </main>
+    <PageShell>
+      {historical ? <aside className="status-banner border-amber-200 bg-amber-50 text-amber-950">You are editing {date}. <a href="/">Go to today</a></aside> : null}
+      <PageHeader kicker="Today" title="Today's Recovery">
+        <p>Record the observations that show how Simon is doing today. Each field saves automatically.</p>
+      </PageHeader>
+      <SectionCard>
+        <h2 className="section-title mb-4">Daily checklist</h2>
+        <DailyChecklist items={daily.checklist} />
+      </SectionCard>
+      <SectionCard>
+        <h2 className="section-title mb-4">Vitals</h2>
+        <div className="grid gap-5 scroll-mt-6" id="section-weight">
+          <WeightInput value={stringValue(values.weight)} onChange={(value) => setValues((current) => ({ ...current, weight: value }))} onBlur={() => saveNonBlank('weight', stringValue(values.weight))} saveState={saveStates.weight ?? 'idle'} />
+        </div>
+        <div className="mt-5 grid gap-5 scroll-mt-6" id="section-pulse">
+          <PulseInput value={stringValue(values.pulse)} onChange={(value) => setValues((current) => ({ ...current, pulse: value }))} onBlur={() => saveNonBlank('pulse', stringValue(values.pulse))} saveState={saveStates.pulse ?? 'idle'} />
+        </div>
+        <div className="mt-5 scroll-mt-6" id="section-bp">
+          <BloodPressureInput systolic={bp[0] ?? ''} diastolic={bp[1] ?? ''} onSystolicChange={(value) => setValues((current) => ({ ...current, bp: `${value}/${bp[1] ?? ''}` }))} onDiastolicChange={(value) => setValues((current) => ({ ...current, bp: `${bp[0] ?? ''}/${value}` }))} onBlur={saveBloodPressure} saveState={saveStates.bp ?? 'idle'} />
+        </div>
+      </SectionCard>
+      <SectionCard className="scroll-mt-6" id="section-walk_distance">
+        <h2 className="section-title mb-4">Walk</h2>
+        <WalkInput distance={stringValue(values.walk_distance)} timeSeconds={stringValue(values.walk_time)} stops={stringValue(values.walk_stops)} onDistanceChange={(value) => setValues((current) => ({ ...current, walk_distance: value }))} onTimeSecondsChange={(value) => setValues((current) => ({ ...current, walk_time: value }))} onStopsChange={(value) => setValues((current) => ({ ...current, walk_stops: value }))} onDistanceBlur={saveWalkDistance} onTimeSecondsBlur={() => saveNonBlank('walk_time', stringValue(values.walk_time))} onStopsBlur={() => saveNonBlank('walk_stops', stringValue(values.walk_stops))} saveState={combinedWalkSaveState(saveStates)} />
+      </SectionCard>
+      <SectionCard className="scroll-mt-6" id="section-songs">
+        <h2 className="section-title mb-4">Guitar</h2>
+        <SongsInput value={stringValue(values.songs)} onChange={(value) => setValues((current) => ({ ...current, songs: value }))} onBlur={() => saveNonBlank('songs', stringValue(values.songs))} saveState={saveStates.songs ?? 'idle'} />
+      </SectionCard>
+      <SectionCard>
+        <h2 className="section-title mb-4">Symptoms</h2>
+        <div className="scroll-mt-6" id="section-nyha">
+          <NyhaSelector value={stringValue(values.nyha)} onSelect={(value) => { setValues((current) => ({ ...current, nyha: value })); void save('nyha', value) }} saveState={saveStates.nyha ?? 'idle'} />
+        </div>
+        <div className="mt-6 scroll-mt-6" id="section-symptoms">
+          <SymptomsSelector value={arrayValue(values.symptoms)} onChange={(value) => { setValues((current) => ({ ...current, symptoms: value })); void save('symptoms', value) }} saveState={saveStates.symptoms ?? 'idle'} />
+        </div>
+      </SectionCard>
+      <SectionCard className="scroll-mt-6" id="section-notes">
+        <h2 className="section-title mb-4">Notes</h2>
+        <NotesInput value={stringValue(values.notes)} onChange={(value) => setValues((current) => ({ ...current, notes: value }))} onBlur={() => save('notes', stringValue(values.notes))} saveState={saveStates.notes ?? 'idle'} />
+      </SectionCard>
+    </PageShell>
   )
 }
