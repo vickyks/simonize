@@ -4,13 +4,19 @@ import { Dashboard } from './pages/Dashboard'
 import { Daily } from './pages/Daily'
 import { Doctor } from './pages/Doctor'
 import { Login } from './pages/Login'
-import { classes } from './components/ui/PageShell'
+import { SectionCard, classes } from './components/ui/PageShell'
 
 function AppContent() {
   const auth = useAuth()
 
   if (auth.status === 'loading') {
-    return <p>Loading...</p>
+    return (
+      <main className="grid min-h-screen place-items-center bg-clinical-page px-4 py-10">
+        <SectionCard className="w-full max-w-md text-center">
+          <p className="page-copy">Loading...</p>
+        </SectionCard>
+      </main>
+    )
   }
 
   if (auth.status === 'anonymous') {
