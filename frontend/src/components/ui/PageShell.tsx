@@ -1,4 +1,3 @@
-import { cloneElement, isValidElement } from 'react'
 import type { HTMLAttributes, ReactNode } from 'react'
 
 export function classes(...values: Array<string | false | null | undefined>) {
@@ -14,13 +13,7 @@ export function PageHeader({ kicker, title, children }: { kicker?: string; title
     <section>
       {kicker ? <p className="page-kicker">{kicker}</p> : null}
       <h1 className="page-title">{title}</h1>
-      {children ? (
-        isValidElement<{ className?: string }>(children) ? (
-          cloneElement(children, { className: classes('page-copy', children.props.className) })
-        ) : (
-          <div className="page-copy">{children}</div>
-        )
-      ) : null}
+      {children ? <div className="page-copy">{children}</div> : null}
     </section>
   )
 }

@@ -19,7 +19,7 @@ describe('UI primitives', () => {
     expect(screen.getByRole('main')).toHaveClass('page-shell')
     expect(screen.getByText('Today')).toHaveClass('page-kicker')
     expect(screen.getByRole('heading', { name: "Simon's Dashboard" })).toHaveClass('page-title')
-    expect(screen.getByText('Recovery picture')).toHaveClass('page-copy')
+    expect(screen.getByText('Recovery picture').parentElement).toHaveClass('page-copy')
   })
 
   it('renders section cards, empty states, and fields', () => {
