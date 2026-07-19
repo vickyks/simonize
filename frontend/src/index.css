@@ -114,6 +114,13 @@
     color: #000 !important;
   }
 
+  .doctor-report,
+  .doctor-report * {
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+
   .doctor-report {
     margin: 0 !important;
     max-width: none !important;
@@ -122,9 +129,11 @@
   }
 
   .doctor-section {
+    background: #fff !important;
     break-inside: avoid;
     page-break-inside: avoid;
     border: 0 !important;
+    color: #000 !important;
     box-shadow: none !important;
   }
 
@@ -133,9 +142,11 @@
     border-collapse: collapse;
   }
 
-  th,
-  td {
+  .table-report th,
+  .table-report td {
+    background: #fff !important;
     border: 1px solid #000 !important;
+    color: #000 !important;
     padding: 0.25rem;
   }
 }

@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Doctor } from './Doctor'
@@ -85,6 +87,15 @@ describe('Doctor', () => {
     render(<Doctor accessToken="token" />)
 
     expect(await screen.findAllByText('No data recorded for this period.')).not.toHaveLength(0)
+  })
+
+  it('defines print CSS that forces the doctor report to black on white', () => {
+    const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8')
+
+    expect(css).toContain('@media print')
+    expect(css).toMatch(/\.doctor-report,\s*\.doctor-report \*/)
+    expect(css).toMatch(/\.doctor-section\s*{[^}]*background:\s*#fff !important;[^}]*color:\s*#000 !important;[^}]*box-shadow:\s*none !important;/s)
+    expect(css).toMatch(/\.table-report th,\s*\.table-report td\s*{(?=[^}]*background:\s*#fff !important;)(?=[^}]*color:\s*#000 !important;)(?=[^}]*border:\s*1px solid #000 !important;)/s)
   })
 
   it('prints the page', async () => {

@@ -59,9 +59,9 @@ function SummaryCard({
 function Advisory({ dashboard }: { dashboard: DashboardResponse }) {
   const status = dashboard.advisory.status
   const styles = {
-    green: { background: '#ecfdf5', border: '#86efac', label: 'Steady', copy: 'No current concerns from recorded observations.' },
-    amber: { background: '#fffbeb', border: '#fbbf24', label: 'Possible concern', copy: null },
-    red: { background: '#fef2f2', border: '#f87171', label: 'Potentially serious', copy: null },
+    green: { label: 'Steady', copy: 'No current concerns from recorded observations.' },
+    amber: { label: 'Possible concern', copy: null },
+    red: { label: 'Potentially serious', copy: null },
   }[status]
 
   return (
