@@ -1,3 +1,5 @@
+import { classes } from '../ui/PageShell'
+
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function SaveStatus({ state }: { state: SaveState }) {
@@ -8,7 +10,13 @@ export function SaveStatus({ state }: { state: SaveState }) {
     error: 'Could not save - try again',
   }[state]
   return (
-    <span aria-live="polite" style={{ color: state === 'error' ? '#b45309' : '#166534', fontSize: '0.875rem' }}>
+    <span
+      aria-live="polite"
+      className={classes(
+        'mt-2 inline-flex text-sm font-semibold',
+        state === 'error' ? 'text-amber-700' : 'text-emerald-700',
+      )}
+    >
       {message}
     </span>
   )

@@ -15,6 +15,7 @@ import {
 
 import * as chartsApi from '../api/charts'
 import type { BloodPressurePoint, ChartPoint, ChartRange, ChartsData } from '../api/charts'
+import { classes, EmptyState, PageHeader, PageShell, SectionCard } from '../components/ui/PageShell'
 
 type ChartsProps = {
   accessToken: string
@@ -61,10 +62,10 @@ function nyhaLabel(value: number) {
 
 function ChartCard({ title, children, empty }: { title: string; children: ReactNode; empty: boolean }) {
   return (
-    <section style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '1rem', padding: '1rem', minHeight: '18rem' }}>
-      <h2>{title}</h2>
-      {empty ? <p>{EMPTY_TEXT}</p> : children}
-    </section>
+    <SectionCard className="grid min-h-72 gap-4">
+      <h2 className="section-title">{title}</h2>
+      {empty ? <EmptyState>{EMPTY_TEXT}</EmptyState> : children}
+    </SectionCard>
   )
 }
 
@@ -131,9 +132,9 @@ export function NyhaCalendar({ points, today = todayIso() }: { points: ChartPoin
   }
 
   return (
-    <section style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '1rem', padding: '1rem' }}>
-      <h2>NYHA Calendar</h2>
-      <div style={{ display: 'grid', gridAutoFlow: 'column', gridTemplateRows: 'repeat(7, 1rem)', gap: '0.25rem', overflowX: 'auto' }}>
+    <SectionCard>
+      <h2 className="section-title">NYHA Calendar</h2>
+      <div className="mt-4 grid auto-cols-max grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-2">
         {days.map((day) => {
           const key = isoDate(day)
           const value = pointMap.get(key)
@@ -145,13 +146,14 @@ export function NyhaCalendar({ points, today = todayIso() }: { points: ChartPoin
               aria-label={label}
               key={key}
               role="img"
-              style={{ width: '1rem', height: '1rem', borderRadius: '0.2rem', backgroundColor: value === undefined ? NO_DATA_COLOUR : NYHA_COLOURS[value] }}
+              className="h-4 w-4 rounded"
+              style={{ backgroundColor: value === undefined ? NO_DATA_COLOUR : NYHA_COLOURS[value] }}
               title={label}
             />
           )
         })}
       </div>
-    </section>
+    </SectionCard>
   )
 }
 
@@ -179,18 +181,18 @@ export function Charts({ accessToken }: ChartsProps) {
     }
   }, [accessToken, range])
 
-  if (loadError) return <main><h1>Could not load charts</h1><p>Please try again.</p></main>
-  if (!charts) return <p>Loading...</p>
+  if (loadError) return <PageShell><PageHeader title="Could not load charts"><p>Please try again.</p></PageHeader></PageShell>
+  if (!charts) return <PageShell><SectionCard><p>Loading...</p></SectionCard></PageShell>
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem', display: 'grid', gap: '1.5rem' }}>
-      <section>
-        <h1>Charts</h1>
+    <PageShell>
+      <PageHeader title="Charts">
         <p>Long-term recovery trends from Simon's recorded observations.</p>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="mt-4 flex flex-wrap gap-2">
           {RANGE_OPTIONS.map((option) => (
             <button
               aria-pressed={range === option.value}
+              className={classes('btn-secondary', range === option.value && 'border-blue-600 bg-blue-50 text-blue-800')}
               key={option.value}
               onClick={() => setRange(option.value)}
               type="button"
@@ -199,8 +201,8 @@ export function Charts({ accessToken }: ChartsProps) {
             </button>
           ))}
         </div>
-      </section>
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(18rem, 1fr))', gap: '1rem' }}>
+      </PageHeader>
+      <section className="grid gap-4 lg:grid-cols-2">
         <ChartCard title="Weight" empty={charts.weight.length === 0}><MetricLineChart data={charts.weight} unit="kg" /></ChartCard>
         <ChartCard title="Pulse" empty={charts.pulse.length === 0}><MetricLineChart data={charts.pulse} unit="bpm" /></ChartCard>
         <ChartCard title="Blood Pressure" empty={charts.bp.length === 0}><BloodPressureChart data={charts.bp} /></ChartCard>
@@ -208,6 +210,6 @@ export function Charts({ accessToken }: ChartsProps) {
         <ChartCard title="Guitar" empty={charts.songs.length === 0}><MetricBarChart data={charts.songs} unit="songs" /></ChartCard>
       </section>
       <NyhaCalendar points={charts.nyha} />
-    </main>
+    </PageShell>
   )
 }

@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Doctor } from './Doctor'
@@ -39,9 +41,16 @@ describe('Doctor', () => {
   it('loads the 7 day summary by default and renders sections', async () => {
     mockSummaryFetch()
 
-    render(<Doctor accessToken="token" />)
+    const { container } = render(<Doctor accessToken="token" />)
 
     expect(await screen.findByRole('heading', { name: 'Doctor Summary' })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(container.querySelector('style')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Doctor Summary' })).toHaveClass('page-title')
+    expect(screen.getByRole('heading', { name: 'Weight' }).closest('section')).toHaveClass('doctor-section', 'section-card')
+    expect(screen.getByRole('button', { name: 'Last 7 days' })).toHaveClass('btn-secondary')
+    expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toHaveClass('btn-primary')
+    expect(container.querySelector('table')).toHaveClass('table-report')
     expect(fetch).toHaveBeenCalledWith('/api/summary?days=7', expect.any(Object))
     expect(screen.getByText('Weight')).toBeInTheDocument()
     expect(screen.getByText('Blood Pressure')).toBeInTheDocument()
@@ -51,6 +60,41 @@ describe('Doctor', () => {
     expect(screen.getByText('Felt stronger today')).toBeInTheDocument()
     expect(screen.getByText('Breathless')).toBeInTheDocument()
     expect(screen.getByText('Good day')).toBeInTheDocument()
+  })
+
+  it('renders loading state inside the clinical page shell and card', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+
+    const { container } = render(<Doctor accessToken="token" />)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(screen.getByText('Loading...').closest('section')).toHaveClass('section-card')
+  })
+
+  it('renders load errors inside the clinical page shell and card', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) }))
+
+    const { container } = render(<Doctor accessToken="token" />)
+
+    expect(await screen.findByRole('heading', { name: 'Could not load doctor summary' })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(screen.getByRole('heading', { name: 'Could not load doctor summary' }).closest('section')).toHaveClass('section-card')
+  })
+
+  it('wraps doctor tables for narrow screens and long notes', async () => {
+    mockSummaryFetch({
+      ...summary,
+      notes: [{ date: '2026-07-13', text: 'Averylongnotewithoutspacesthatshouldnotforcehorizontalpageoverflow' }],
+    })
+
+    render(<Doctor accessToken="token" />)
+
+    const note = await screen.findByText('Averylongnotewithoutspacesthatshouldnotforcehorizontalpageoverflow')
+    expect(note.closest('td')).toHaveClass('whitespace-normal', 'break-words')
+    for (const table of screen.getAllByRole('table')) {
+      expect(table.parentElement).toHaveClass('overflow-x-auto')
+    }
   })
 
   it('changes to the 30 day summary', async () => {
@@ -78,6 +122,15 @@ describe('Doctor', () => {
     render(<Doctor accessToken="token" />)
 
     expect(await screen.findAllByText('No data recorded for this period.')).not.toHaveLength(0)
+  })
+
+  it('defines print CSS that forces the doctor report to black on white', () => {
+    const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8')
+
+    expect(css).toContain('@media print')
+    expect(css).toMatch(/\.doctor-report,\s*\.doctor-report \*/)
+    expect(css).toMatch(/\.doctor-section\s*{[^}]*background:\s*#fff !important;[^}]*color:\s*#000 !important;[^}]*box-shadow:\s*none !important;/s)
+    expect(css).toMatch(/\.table-report th,\s*\.table-report td\s*{(?=[^}]*background:\s*#fff !important;)(?=[^}]*color:\s*#000 !important;)(?=[^}]*border:\s*1px solid #000 !important;)/s)
   })
 
   it('prints the page', async () => {

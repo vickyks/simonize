@@ -38,9 +38,13 @@ describe('Dashboard', () => {
       advisory: { status: 'green', messages: [] },
     })
 
-    renderDashboard()
+    const { container } = render(<Dashboard accessToken="token" />)
 
     expect(await screen.findByRole('heading', { name: "Simon's Dashboard" })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByRole('heading', { name: "Simon's Dashboard" })).toHaveClass('page-title')
+    expect(screen.getByRole('heading', { name: 'Weight' }).closest('article')).toHaveClass('section-card')
+    expect(screen.getByRole('link', { name: "Record today's observations" })).toHaveClass('btn-primary')
     expect(screen.getByText('92.3 kg')).toBeInTheDocument()
     expect(screen.getByText('71 bpm')).toBeInTheDocument()
     expect(screen.getByText('121/78')).toBeInTheDocument()
@@ -48,6 +52,16 @@ describe('Dashboard', () => {
     expect(screen.getByText('3 songs')).toBeInTheDocument()
     expect(screen.getByText('Class 3')).toBeInTheDocument()
     expect(screen.getByText('No current concerns from recorded observations.')).toBeInTheDocument()
+  })
+
+  it('renders loading state inside the clinical page shell and card', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+
+    const { container } = render(<Dashboard accessToken="token" />)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByText('Loading...').closest('section')).toHaveClass('section-card')
   })
 
   it('renders calm empty states for missing values', async () => {

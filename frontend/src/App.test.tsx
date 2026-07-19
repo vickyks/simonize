@@ -5,11 +5,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
 
+const authState = vi.hoisted(() => ({
+  status: 'authenticated' as 'loading' | 'authenticated' | 'anonymous',
+}))
+
 vi.mock('./auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useAuth: () => ({
     accessToken: 'token',
-    status: 'authenticated',
+    status: authState.status,
     username: 'simon',
     login: vi.fn(),
     logout: vi.fn(),
@@ -35,7 +39,18 @@ vi.mock('./pages/Doctor', () => ({
 describe('App routing', () => {
   afterEach(() => {
     cleanup()
+    authState.status = 'authenticated'
     window.history.replaceState(null, '', '/')
+  })
+
+  it('renders auth restore loading state inside a clinical card', () => {
+    authState.status = 'loading'
+
+    render(<App />)
+
+    const loading = screen.getByText('Loading...')
+    expect(loading.closest('main')).toHaveClass('bg-clinical-page')
+    expect(loading.closest('section')).toHaveClass('section-card')
   })
 
   it('renders dashboard at /dashboard', () => {
@@ -44,6 +59,8 @@ describe('App routing', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Dashboard route' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('banner').parentElement).toHaveClass('app-shell')
   })
 
   it('redirects authenticated /login visits to /dashboard', () => {
