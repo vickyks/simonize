@@ -44,6 +44,8 @@ describe('App routing', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Dashboard route' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('banner').parentElement).toHaveClass('app-shell')
   })
 
   it('redirects authenticated /login visits to /dashboard', () => {

@@ -29,6 +29,8 @@ describe('Login', () => {
 
     render(<Login />)
 
+    expect(screen.getByRole('main')).toHaveClass('bg-clinical-page')
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('page-title')
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'simon' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password' } })
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
