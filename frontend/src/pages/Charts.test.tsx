@@ -60,6 +60,16 @@ describe('Charts', () => {
     expect(fetch).toHaveBeenCalledWith('/api/charts/nyha', expect.any(Object))
   })
 
+  it('renders loading state inside the clinical page shell and card', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+
+    const { container } = render(<Charts accessToken="token" />)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByText('Loading...').closest('section')).toHaveClass('section-card')
+  })
+
   it('changes the standard chart range', async () => {
     mockChartFetch({
       ...emptyPayloads,

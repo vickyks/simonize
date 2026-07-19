@@ -97,7 +97,7 @@ export function Dashboard({ accessToken }: DashboardProps) {
   }, [accessToken])
 
   if (loadError) return <PageShell><PageHeader title="Could not load dashboard"><p>Please try again.</p></PageHeader></PageShell>
-  if (!dashboard) return <p>Loading...</p>
+  if (!dashboard) return <PageShell><SectionCard><p>Loading...</p></SectionCard></PageShell>
 
   return (
     <PageShell>

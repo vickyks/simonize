@@ -21,7 +21,7 @@ import type {
   SummaryResponse,
   SummaryWalkPoint,
 } from '../api/summary'
-import { classes, PageHeader, PageShell } from '../components/ui/PageShell'
+import { classes, PageHeader, PageShell, SectionCard } from '../components/ui/PageShell'
 
 type DoctorProps = { accessToken: string }
 const EMPTY_TEXT = 'No data recorded for this period.'
@@ -62,27 +62,33 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
+function TableWrap({ children }: { children: ReactNode }) {
+  return <div className="overflow-x-auto">{children}</div>
+}
+
 function PointTable({ rows, unit }: { rows: SummaryPoint[]; unit: string }) {
   if (rows.length === 0) return <p>{EMPTY_TEXT}</p>
   return (
-    <table className="table-report">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.date}>
-            <td>{formatDate(row.date)}</td>
-            <td>
-              {row.value} {unit}
-            </td>
+    <TableWrap>
+      <table className="table-report">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Value</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.date}>
+              <td>{formatDate(row.date)}</td>
+              <td>
+                {row.value} {unit}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </TableWrap>
   )
 }
 
@@ -134,24 +140,26 @@ function BpSection({ rows }: { rows: SummaryBpPoint[] }) {
               <Line name="Diastolic" dataKey="diastolic" stroke="#6b7280" />
             </LineChart>
           </ResponsiveContainer>
-          <table className="table-report">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Systolic</th>
-                <th>Diastolic</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.date}>
-                  <td>{formatDate(row.date)}</td>
-                  <td>{row.systolic}</td>
-                  <td>{row.diastolic}</td>
+          <TableWrap>
+            <table className="table-report">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Systolic</th>
+                  <th>Diastolic</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.date}>
+                    <td>{formatDate(row.date)}</td>
+                    <td>{row.systolic}</td>
+                    <td>{row.diastolic}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrap>
         </>
       )}
     </Section>
@@ -167,26 +175,28 @@ function WalkSection({ rows }: { rows: SummaryWalkPoint[] }) {
       ) : (
         <>
           <PointBarChart data={chartRows} unit="m" />
-          <table className="table-report">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Distance</th>
-                <th>Time</th>
-                <th>Stops</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.date}>
-                  <td>{formatDate(row.date)}</td>
-                  <td>{row.distance} m</td>
-                  <td>{formatDuration(row.time_seconds)}</td>
-                  <td>{row.stops ?? '-'}</td>
+          <TableWrap>
+            <table className="table-report">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Distance</th>
+                  <th>Time</th>
+                  <th>Stops</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.date}>
+                    <td>{formatDate(row.date)}</td>
+                    <td>{row.distance} m</td>
+                    <td>{formatDuration(row.time_seconds)}</td>
+                    <td>{row.stops ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrap>
         </>
       )}
     </Section>
@@ -199,28 +209,30 @@ function SymptomsSection({ summary }: { summary: SummaryResponse }) {
       {summary.symptoms.length === 0 ? (
         <p>{EMPTY_TEXT}</p>
       ) : (
-        <table className="table-report">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Recorded symptoms</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.symptoms.map((entry) => (
-              <tr key={entry.date}>
-                <td>{formatDate(entry.date)}</td>
-                <td>
-                  <ul>
-                    {entry.values.map((value) => (
-                      <li key={value}>{SYMPTOM_LABELS[value] ?? value}</li>
-                    ))}
-                  </ul>
-                </td>
+        <TableWrap>
+          <table className="table-report">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Recorded symptoms</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {summary.symptoms.map((entry) => (
+                <tr key={entry.date}>
+                  <td>{formatDate(entry.date)}</td>
+                  <td>
+                    <ul>
+                      {entry.values.map((value) => (
+                        <li key={value}>{SYMPTOM_LABELS[value] ?? value}</li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableWrap>
       )}
     </Section>
   )
@@ -232,22 +244,24 @@ function NotesSection({ summary }: { summary: SummaryResponse }) {
       {summary.notes.length === 0 ? (
         <p>{EMPTY_TEXT}</p>
       ) : (
-        <table className="table-report">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.notes.map((entry) => (
-              <tr key={entry.date}>
-                <td>{formatDate(entry.date)}</td>
-                <td>{entry.text}</td>
+        <TableWrap>
+          <table className="table-report">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Note</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {summary.notes.map((entry) => (
+                <tr key={entry.date}>
+                  <td>{formatDate(entry.date)}</td>
+                  <td className="whitespace-normal break-words">{entry.text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableWrap>
       )}
     </Section>
   )
@@ -306,13 +320,15 @@ export function Doctor({ accessToken }: DoctorProps) {
 
   if (loadError) {
     return (
-      <main>
-        <h1>Could not load doctor summary</h1>
-        <p>Please try again.</p>
-      </main>
+      <PageShell className="doctor-report">
+        <SectionCard>
+          <h1 className="page-title">Could not load doctor summary</h1>
+          <p>Please try again.</p>
+        </SectionCard>
+      </PageShell>
     )
   }
-  if (!summary) return <p>Loading...</p>
+  if (!summary) return <PageShell className="doctor-report"><SectionCard><p>Loading...</p></SectionCard></PageShell>
 
   return (
     <PageShell className="doctor-report">

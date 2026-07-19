@@ -62,6 +62,41 @@ describe('Doctor', () => {
     expect(screen.getByText('Good day')).toBeInTheDocument()
   })
 
+  it('renders loading state inside the clinical page shell and card', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+
+    const { container } = render(<Doctor accessToken="token" />)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(screen.getByText('Loading...').closest('section')).toHaveClass('section-card')
+  })
+
+  it('renders load errors inside the clinical page shell and card', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) }))
+
+    const { container } = render(<Doctor accessToken="token" />)
+
+    expect(await screen.findByRole('heading', { name: 'Could not load doctor summary' })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(screen.getByRole('heading', { name: 'Could not load doctor summary' }).closest('section')).toHaveClass('section-card')
+  })
+
+  it('wraps doctor tables for narrow screens and long notes', async () => {
+    mockSummaryFetch({
+      ...summary,
+      notes: [{ date: '2026-07-13', text: 'Averylongnotewithoutspacesthatshouldnotforcehorizontalpageoverflow' }],
+    })
+
+    render(<Doctor accessToken="token" />)
+
+    const note = await screen.findByText('Averylongnotewithoutspacesthatshouldnotforcehorizontalpageoverflow')
+    expect(note.closest('td')).toHaveClass('whitespace-normal', 'break-words')
+    for (const table of screen.getAllByRole('table')) {
+      expect(table.parentElement).toHaveClass('overflow-x-auto')
+    }
+  })
+
   it('changes to the 30 day summary', async () => {
     mockSummaryFetch({ ...summary, range: { ...summary.range, days: 30 } })
 

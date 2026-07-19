@@ -54,6 +54,16 @@ describe('Dashboard', () => {
     expect(screen.getByText('No current concerns from recorded observations.')).toBeInTheDocument()
   })
 
+  it('renders loading state inside the clinical page shell and card', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)))
+
+    const { container } = render(<Dashboard accessToken="token" />)
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByText('Loading...').closest('section')).toHaveClass('section-card')
+  })
+
   it('renders calm empty states for missing values', async () => {
     mockFetch({
       today: {

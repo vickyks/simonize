@@ -182,7 +182,7 @@ export function Charts({ accessToken }: ChartsProps) {
   }, [accessToken, range])
 
   if (loadError) return <PageShell><PageHeader title="Could not load charts"><p>Please try again.</p></PageHeader></PageShell>
-  if (!charts) return <p>Loading...</p>
+  if (!charts) return <PageShell><SectionCard><p>Loading...</p></SectionCard></PageShell>
 
   return (
     <PageShell>
