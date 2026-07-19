@@ -21,6 +21,7 @@ import type {
   SummaryResponse,
   SummaryWalkPoint,
 } from '../api/summary'
+import { classes, PageHeader, PageShell } from '../components/ui/PageShell'
 
 type DoctorProps = { accessToken: string }
 const EMPTY_TEXT = 'No data recorded for this period.'
@@ -54,8 +55,8 @@ function formatDuration(seconds: number | null) {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="doctor-section">
-      <h2>{title}</h2>
+    <section className="doctor-section section-card">
+      <h2 className="section-title">{title}</h2>
       {children}
     </section>
   )
@@ -64,7 +65,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function PointTable({ rows, unit }: { rows: SummaryPoint[]; unit: string }) {
   if (rows.length === 0) return <p>{EMPTY_TEXT}</p>
   return (
-    <table>
+    <table className="table-report">
       <thead>
         <tr>
           <th>Date</th>
@@ -133,7 +134,7 @@ function BpSection({ rows }: { rows: SummaryBpPoint[] }) {
               <Line name="Diastolic" dataKey="diastolic" stroke="#6b7280" />
             </LineChart>
           </ResponsiveContainer>
-          <table>
+          <table className="table-report">
             <thead>
               <tr>
                 <th>Date</th>
@@ -166,7 +167,7 @@ function WalkSection({ rows }: { rows: SummaryWalkPoint[] }) {
       ) : (
         <>
           <PointBarChart data={chartRows} unit="m" />
-          <table>
+          <table className="table-report">
             <thead>
               <tr>
                 <th>Date</th>
@@ -198,7 +199,7 @@ function SymptomsSection({ summary }: { summary: SummaryResponse }) {
       {summary.symptoms.length === 0 ? (
         <p>{EMPTY_TEXT}</p>
       ) : (
-        <table>
+        <table className="table-report">
           <thead>
             <tr>
               <th>Date</th>
@@ -231,7 +232,7 @@ function NotesSection({ summary }: { summary: SummaryResponse }) {
       {summary.notes.length === 0 ? (
         <p>{EMPTY_TEXT}</p>
       ) : (
-        <table>
+        <table className="table-report">
           <thead>
             <tr>
               <th>Date</th>
@@ -262,22 +263,21 @@ function DoctorHeader({
   setDays: (days: SummaryDays) => void
 }) {
   return (
-    <section>
-      <h1>Doctor Summary</h1>
+    <PageHeader title="Doctor Summary">
       <p>{`Last ${summary.range.days} days: ${formatDate(summary.range.start_date)} to ${formatDate(summary.range.end_date)}`}</p>
       <p>Generated: {new Date(summary.range.generated_at).toLocaleString('en-GB')}</p>
-      <div className="no-print">
-        <button type="button" aria-pressed={days === '7'} onClick={() => setDays('7')}>
+      <div className="no-print mt-4 flex flex-wrap gap-2">
+        <button className={classes('btn-secondary', days === '7' && 'border-blue-600 bg-blue-50 text-blue-800')} type="button" aria-pressed={days === '7'} onClick={() => setDays('7')}>
           Last 7 days
         </button>
-        <button type="button" aria-pressed={days === '30'} onClick={() => setDays('30')}>
+        <button className={classes('btn-secondary', days === '30' && 'border-blue-600 bg-blue-50 text-blue-800')} type="button" aria-pressed={days === '30'} onClick={() => setDays('30')}>
           Last 30 days
         </button>
-        <button type="button" onClick={() => window.print()}>
+        <button className="btn-primary" type="button" onClick={() => window.print()}>
           Print / Save as PDF
         </button>
       </div>
-    </section>
+    </PageHeader>
   )
 }
 
@@ -315,8 +315,7 @@ export function Doctor({ accessToken }: DoctorProps) {
   if (!summary) return <p>Loading...</p>
 
   return (
-    <main className="doctor-report">
-      <style>{`@media print { header, .no-print { display: none !important; } body { background: #fff; color: #000; } .doctor-report { margin: 0; font-size: 11pt; } .doctor-section { break-inside: avoid; page-break-inside: avoid; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #000; padding: 0.25rem; } }`}</style>
+    <PageShell className="doctor-report">
       <DoctorHeader days={days} summary={summary} setDays={setDays} />
       <Section title="Weight">
         <PointLineChart data={summary.vitals.weight} unit="kg" />
@@ -338,6 +337,6 @@ export function Doctor({ accessToken }: DoctorProps) {
       </Section>
       <SymptomsSection summary={summary} />
       <NotesSection summary={summary} />
-    </main>
+    </PageShell>
   )
 }

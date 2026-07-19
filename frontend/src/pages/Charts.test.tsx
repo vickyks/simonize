@@ -47,9 +47,13 @@ describe('Charts', () => {
       '/api/charts/bp?days=30': [{ date: '2026-07-13', systolic: 121, diastolic: 78 }],
     })
 
-    render(<Charts accessToken="token" />)
+    const { container } = render(<Charts accessToken="token" />)
 
     expect(await screen.findByRole('heading', { name: 'Charts' })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByRole('heading', { name: 'Charts' })).toHaveClass('page-title')
+    expect(screen.getByRole('heading', { name: 'Weight' }).closest('section')).toHaveClass('section-card')
+    expect(screen.getByRole('button', { name: '30 days' })).toHaveClass('btn-secondary', 'border-blue-600', 'bg-blue-50', 'text-blue-800')
     expect(screen.getByText('Weight')).toBeInTheDocument()
     expect(screen.getByText('Blood Pressure')).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith('/api/charts/weight?days=30', expect.any(Object))
@@ -119,7 +123,9 @@ describe('Charts', () => {
 
     render(<Charts accessToken="token" />)
 
-    expect(await screen.findAllByText('No data yet — start recording to see your progress')).not.toHaveLength(0)
+    const emptyStates = await screen.findAllByText('No data yet — start recording to see your progress')
+    expect(emptyStates).not.toHaveLength(0)
+    expect(emptyStates[0]).toHaveClass('border-dashed', 'text-slate-500')
   })
 
   it('renders blood pressure series labels', async () => {

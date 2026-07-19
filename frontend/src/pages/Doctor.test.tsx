@@ -39,9 +39,16 @@ describe('Doctor', () => {
   it('loads the 7 day summary by default and renders sections', async () => {
     mockSummaryFetch()
 
-    render(<Doctor accessToken="token" />)
+    const { container } = render(<Doctor accessToken="token" />)
 
     expect(await screen.findByRole('heading', { name: 'Doctor Summary' })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell', 'doctor-report')
+    expect(container.querySelector('style')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Doctor Summary' })).toHaveClass('page-title')
+    expect(screen.getByRole('heading', { name: 'Weight' }).closest('section')).toHaveClass('doctor-section', 'section-card')
+    expect(screen.getByRole('button', { name: 'Last 7 days' })).toHaveClass('btn-secondary')
+    expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toHaveClass('btn-primary')
+    expect(container.querySelector('table')).toHaveClass('table-report')
     expect(fetch).toHaveBeenCalledWith('/api/summary?days=7', expect.any(Object))
     expect(screen.getByText('Weight')).toBeInTheDocument()
     expect(screen.getByText('Blood Pressure')).toBeInTheDocument()

@@ -38,9 +38,13 @@ describe('Dashboard', () => {
       advisory: { status: 'green', messages: [] },
     })
 
-    renderDashboard()
+    const { container } = render(<Dashboard accessToken="token" />)
 
     expect(await screen.findByRole('heading', { name: "Simon's Dashboard" })).toBeInTheDocument()
+    expect(container.querySelector('main')).toHaveClass('page-shell')
+    expect(screen.getByRole('heading', { name: "Simon's Dashboard" })).toHaveClass('page-title')
+    expect(screen.getByRole('heading', { name: 'Weight' }).closest('article')).toHaveClass('section-card')
+    expect(screen.getByRole('link', { name: "Record today's observations" })).toHaveClass('btn-primary')
     expect(screen.getByText('92.3 kg')).toBeInTheDocument()
     expect(screen.getByText('71 bpm')).toBeInTheDocument()
     expect(screen.getByText('121/78')).toBeInTheDocument()

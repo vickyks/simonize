@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import * as dashboardApi from '../api/dashboard'
 import type { DashboardResponse, TrendPoint } from '../api/dashboard'
+import { classes, PageHeader, PageShell, SectionCard } from '../components/ui/PageShell'
 
 type DashboardProps = {
   accessToken: string
@@ -29,7 +30,7 @@ function Sparkline({ points }: { points: TrendPoint[] }) {
   })
 
   return (
-    <svg viewBox="0 0 100 32" role="img" aria-label="7 day trend" style={{ width: '100%', height: '2rem' }}>
+    <svg viewBox="0 0 100 32" role="img" aria-label="7 day trend" className="h-8 w-full">
       <polyline fill="none" stroke="currentColor" strokeWidth="3" points={coordinates.join(' ')} />
     </svg>
   )
@@ -47,9 +48,9 @@ function SummaryCard({
   trend?: TrendPoint[]
 }) {
   return (
-    <article style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '1rem', padding: '1rem', boxShadow: '0 8px 24px rgb(15 23 42 / 0.06)' }}>
-      <h2 style={{ fontSize: '0.9rem', margin: 0, color: '#475569' }}>{title}</h2>
-      <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: '0.5rem 0' }}>{value ?? empty}</p>
+    <article className="section-card grid min-h-40 gap-3">
+      <h2 className="text-base font-semibold text-slate-500">{title}</h2>
+      <p className={classes('text-3xl font-bold tracking-tight', value ? 'text-clinical-ink' : 'text-slate-400')}>{value ?? empty}</p>
       {trend ? <Sparkline points={trend} /> : null}
     </article>
   )
@@ -64,15 +65,19 @@ function Advisory({ dashboard }: { dashboard: DashboardResponse }) {
   }[status]
 
   return (
-    <section style={{ background: styles.background, border: `1px solid ${styles.border}`, borderRadius: '1rem', padding: '1rem' }}>
-      <h2 style={{ marginTop: 0 }}>{styles.label}</h2>
+    <SectionCard className={classes('status-banner', {
+      green: 'border-green-300 bg-green-50',
+      amber: 'border-amber-400 bg-amber-50',
+      red: 'border-red-400 bg-red-50',
+    }[status])}>
+      <h2 className="text-xl font-bold text-clinical-ink">{styles.label}</h2>
       {styles.copy ? <p>{styles.copy}</p> : null}
       {dashboard.advisory.messages.length > 0 ? (
         <ul>
           {dashboard.advisory.messages.map((message) => <li key={message}>{message}</li>)}
         </ul>
       ) : null}
-    </section>
+    </SectionCard>
   )
 }
 
@@ -91,18 +96,16 @@ export function Dashboard({ accessToken }: DashboardProps) {
       })
   }, [accessToken])
 
-  if (loadError) return <main><h1>Could not load dashboard</h1><p>Please try again.</p></main>
+  if (loadError) return <PageShell><PageHeader title="Could not load dashboard"><p>Please try again.</p></PageHeader></PageShell>
   if (!dashboard) return <p>Loading...</p>
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem', display: 'grid', gap: '1.5rem' }}>
-      <section>
-        <p style={{ color: '#64748b', margin: 0 }}>{formatDate(dashboard.today.date)}</p>
-        <h1>Simon's Dashboard</h1>
+    <PageShell>
+      <PageHeader kicker={formatDate(dashboard.today.date)} title="Simon's Dashboard">
         <p>Today's recovery picture, from the observations recorded so far.</p>
-      </section>
+      </PageHeader>
       <Advisory dashboard={dashboard} />
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', gap: '1rem' }}>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <SummaryCard title="Weight" value={dashboard.today.weight === null ? null : `${dashboard.today.weight} kg`} empty="No weight recorded today yet" trend={dashboard.trends.weight_7d} />
         <SummaryCard title="Pulse" value={dashboard.today.pulse === null ? null : `${dashboard.today.pulse} bpm`} empty="No pulse recorded today yet" trend={dashboard.trends.pulse_7d} />
         <SummaryCard title="Blood Pressure" value={dashboard.today.bp} empty="No blood pressure recorded today yet" />
@@ -110,7 +113,7 @@ export function Dashboard({ accessToken }: DashboardProps) {
         <SummaryCard title="Guitar" value={dashboard.today.songs === null ? null : `${dashboard.today.songs} songs`} empty="No guitar recorded today yet" />
         <SummaryCard title="Current NYHA" value={dashboard.today.nyha === null ? null : `Class ${dashboard.today.nyha}`} empty="No NYHA recorded today yet" />
       </section>
-      <p><a href="/">Record today's observations</a></p>
-    </main>
+      <p><a className="btn-primary no-underline" href="/">Record today's observations</a></p>
+    </PageShell>
   )
 }
