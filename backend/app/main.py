@@ -8,6 +8,7 @@ from app.routers.charts import router as charts_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.observations import router as observations_router
 from app.routers.summary import router as summary_router
+from app.routers.targets import router as targets_router
 from app.services.auth_service import AuthService
 
 
@@ -29,6 +30,7 @@ app.include_router(observations_router)
 app.include_router(dashboard_router)
 app.include_router(charts_router)
 app.include_router(summary_router)
+app.include_router(targets_router)
 
 
 @app.get("/health")
