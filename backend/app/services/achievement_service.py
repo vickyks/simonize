@@ -24,6 +24,16 @@ MILESTONE_ORDER = [
     "thirty_consecutive_days",
 ]
 
+INT_RANGES = {
+    ObservationType.PULSE: (30, 250),
+    ObservationType.WALK_DISTANCE: (0, 50000),
+    ObservationType.SONGS: (0, 100),
+    ObservationType.NYHA: (1, 4),
+}
+FLOAT_RANGES = {
+    ObservationType.WEIGHT: (30.0, 300.0),
+}
+
 
 class AchievementService:
     def __init__(self, session: Session):
@@ -100,7 +110,7 @@ class AchievementService:
     ) -> MilestoneEntry | None:
         best: tuple[date, int] | None = None
         for day, observation in self._observations_of_type(grouped, observation_type):
-            value = self._int(observation.value)
+            value = self._int(observation.value, observation_type)
             if value is None:
                 continue
             if best is None or value > best[1]:
@@ -123,7 +133,7 @@ class AchievementService:
         for day, observation in self._observations_of_type(
             grouped, ObservationType.PULSE
         ):
-            value = self._int(observation.value)
+            value = self._int(observation.value, ObservationType.PULSE)
             if value is None:
                 continue
             if best is None or value < best[1]:
@@ -168,7 +178,7 @@ class AchievementService:
         for day, observation in self._observations_of_type(
             grouped, ObservationType.NYHA
         ):
-            if self._int(observation.value) == value:
+            if self._int(observation.value, ObservationType.NYHA) == value:
                 return MilestoneEntry(
                     type=f"first_nyha_{'iii' if value == 3 else 'ii'}",
                     title=f"First NYHA {value}",
@@ -242,21 +252,35 @@ class AchievementService:
     ) -> float | None:
         for observation in reversed(observations):
             if observation.type == observation_type:
-                return self._float(observation.value)
+                return self._float(observation.value, observation_type)
         return None
 
-    def _int(self, value: object) -> int | None:
+    def _int(
+        self, value: object, observation_type: ObservationType | None = None
+    ) -> int | None:
         if isinstance(value, bool):
             return None
         try:
             number = int(value)
         except (TypeError, ValueError):
             return None
+        if observation_type in INT_RANGES:
+            low, high = INT_RANGES[observation_type]
+            if number < low or number > high:
+                return None
         return number
 
-    def _float(self, value: object) -> float | None:
+    def _float(
+        self, value: object, observation_type: ObservationType | None = None
+    ) -> float | None:
         try:
             number = float(value)
         except (TypeError, ValueError):
             return None
-        return number if math.isfinite(number) else None
+        if not math.isfinite(number):
+            return None
+        if observation_type in FLOAT_RANGES:
+            low, high = FLOAT_RANGES[observation_type]
+            if number < low or number > high:
+                return None
+        return number

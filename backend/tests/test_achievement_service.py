@@ -163,3 +163,82 @@ def test_achievement_service_is_user_scoped_and_skips_invalid_values():
         milestones = AchievementService(session).list(user_id=simon.id)
 
         assert [milestone.type for milestone in milestones] == []
+
+
+def test_achievement_service_skips_range_invalid_numeric_values():
+    with make_session() as session:
+        user = make_user(session)
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 10),
+                type=ObservationType.WALK_DISTANCE,
+                value="-5",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 11),
+                type=ObservationType.WALK_DISTANCE,
+                value="325",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 10),
+                type=ObservationType.SONGS,
+                value="200",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 11),
+                type=ObservationType.SONGS,
+                value="4",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 10),
+                type=ObservationType.PULSE,
+                value="5",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 11),
+                type=ObservationType.PULSE,
+                value="68",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 1),
+                type=ObservationType.WEIGHT,
+                value="5.0",
+            )
+        )
+        session.add(
+            Observation(
+                user_id=user.id,
+                date=date(2026, 7, 7),
+                type=ObservationType.WEIGHT,
+                value="5.5",
+            )
+        )
+        session.commit()
+
+        milestones = AchievementService(session).list(user_id=user.id)
+
+        assert milestone_by_type(milestones, "longest_walk").value == "325 m"
+        assert milestone_by_type(milestones, "most_songs").value == "4 songs"
+        assert milestone_by_type(milestones, "lowest_resting_pulse").value == "68 bpm"
+        assert "weight_stable_7_days" not in [
+            milestone.type for milestone in milestones
+        ]
