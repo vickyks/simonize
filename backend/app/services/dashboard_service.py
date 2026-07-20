@@ -70,7 +70,9 @@ class DashboardService:
                 messages=advisory.messages,
             ),
             targets=self._targets(user_id, today_values, grouped),
-            milestones=AchievementService(self.session).list(user_id=user_id)[:3],
+            milestones=AchievementService(self.session).list(
+                user_id=user_id, as_of=current_day
+            )[:3],
         )
 
     def _group_by_date(

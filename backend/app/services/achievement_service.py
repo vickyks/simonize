@@ -39,11 +39,14 @@ class AchievementService:
     def __init__(self, session: Session):
         self.session = session
 
-    def list(self, user_id: uuid.UUID) -> list[MilestoneEntry]:
+    def list(
+        self, user_id: uuid.UUID, as_of: date | None = None
+    ) -> list[MilestoneEntry]:
+        query = select(Observation).where(Observation.user_id == user_id)
+        if as_of is not None:
+            query = query.where(Observation.date <= as_of)
         observations = self.session.exec(
-            select(Observation)
-            .where(Observation.user_id == user_id)
-            .order_by(Observation.date, Observation.created_at)
+            query.order_by(Observation.date, Observation.created_at)
         ).all()
         grouped = self._group(observations)
         milestones = [

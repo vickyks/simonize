@@ -155,3 +155,17 @@ def test_dashboard_uses_latest_nyha_when_today_missing():
             "met": True,
             "label": "Class 2, target Class 2",
         }
+
+
+def test_dashboard_milestones_ignore_future_observations():
+    with make_session() as session:
+        user = make_user(session)
+        service = ObservationService(session)
+        service.upsert(user, date(2026, 7, 13), ObservationType.WALK_DISTANCE, "325")
+        service.upsert(user, date(2026, 7, 14), ObservationType.WALK_DISTANCE, "500")
+
+        dashboard = DashboardService(session).build(
+            user_id=user.id, today=date(2026, 7, 13)
+        )
+
+        assert dashboard.milestones[0].value == "325 m"
