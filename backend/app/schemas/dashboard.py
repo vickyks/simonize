@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.schemas.targets import MilestoneEntry
+
 
 class TrendPoint(BaseModel):
     date: str
@@ -34,7 +36,27 @@ class DashboardAdvisory(BaseModel):
     messages: list[str]
 
 
+class DashboardTargetProgress(BaseModel):
+    current: int | None
+    target: int
+    met: bool
+    label: str
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, dict):
+            return self.model_dump() == other
+        return super().__eq__(other)
+
+
+class DashboardTargets(BaseModel):
+    walk_distance: DashboardTargetProgress
+    songs: DashboardTargetProgress
+    nyha: DashboardTargetProgress
+
+
 class DashboardResponse(BaseModel):
     today: DashboardToday
     trends: DashboardTrends
     advisory: DashboardAdvisory
+    targets: DashboardTargets
+    milestones: list[MilestoneEntry]

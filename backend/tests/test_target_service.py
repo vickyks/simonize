@@ -1,6 +1,10 @@
+from datetime import date
+
 import pytest
+from app.models.observation import ObservationType
 from app.models.target import Target, TargetType
 from app.models.user import User
+from app.services.observation_service import ObservationService
 from app.services.target_service import TargetService, TargetValidationError
 from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
@@ -38,6 +42,19 @@ def test_target_service_creates_defaults_in_stable_order():
         assert [target.value for target in response.targets] == [500, 5, 2]
         assert [target.unit for target in response.targets] == ["m", "songs", "class"]
         assert response.milestones == []
+
+
+def test_target_view_includes_achievements():
+    with make_session() as session:
+        user = make_user(session)
+
+        ObservationService(session).upsert(
+            user, date(2026, 7, 13), ObservationType.WALK_DISTANCE, "325"
+        )
+
+        response = TargetService(session).get_view(user_id=user.id)
+
+        assert response.milestones[0].type == "longest_walk"
 
 
 def test_target_update_persists_value_for_current_user_only():

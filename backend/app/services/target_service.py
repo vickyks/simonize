@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 
 from app.models.target import Target, TargetType
 from app.schemas.targets import TargetEntry, TargetsResponse
+from app.services.achievement_service import AchievementService
 
 TARGET_ORDER = [TargetType.WALK_DISTANCE, TargetType.SONGS, TargetType.NYHA]
 TARGET_DEFAULTS = {
@@ -36,7 +37,7 @@ class TargetService:
         targets = self._ensure_defaults(user_id)
         return TargetsResponse(
             targets=[self._entry(targets[target_type]) for target_type in TARGET_ORDER],
-            milestones=[],
+            milestones=AchievementService(self.session).list(user_id=user_id),
         )
 
     def update(

@@ -50,6 +50,26 @@ def test_dashboard_builds_today_values_and_trends():
         assert dashboard.today.walk_distance == 325
         assert dashboard.today.songs == 3
         assert dashboard.today.nyha == 3
+        assert dashboard.targets.walk_distance == {
+            "current": 325,
+            "target": 500,
+            "met": False,
+            "label": "325 m of 500 m",
+        }
+        assert dashboard.targets.songs == {
+            "current": 3,
+            "target": 5,
+            "met": False,
+            "label": "3 of 5 songs",
+        }
+        assert dashboard.targets.nyha == {
+            "current": 3,
+            "target": 2,
+            "met": False,
+            "label": "Class 3, target Class 2",
+        }
+        assert dashboard.milestones[0].type == "longest_walk"
+        assert len(dashboard.milestones) <= 3
         assert dashboard.trends.weight_7d == [
             {"date": "2026-07-07", "value": 92.8},
             {"date": "2026-07-12", "value": 92.4},
@@ -94,3 +114,22 @@ def test_dashboard_ignores_invalid_stored_values():
 
         assert dashboard.today.weight is None
         assert dashboard.trends.weight_7d == []
+
+
+def test_dashboard_uses_latest_nyha_when_today_missing():
+    with make_session() as session:
+        user = make_user(session)
+        ObservationService(session).upsert(
+            user, date(2026, 7, 10), ObservationType.NYHA, "2"
+        )
+
+        dashboard = DashboardService(session).build(
+            user_id=user.id, today=date(2026, 7, 13)
+        )
+
+        assert dashboard.targets.nyha == {
+            "current": 2,
+            "target": 2,
+            "met": True,
+            "label": "Class 2, target Class 2",
+        }
