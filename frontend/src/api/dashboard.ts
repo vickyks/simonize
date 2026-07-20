@@ -7,6 +7,21 @@ export type TrendPoint = {
   value: number
 }
 
+export type DashboardTargetProgress = {
+  current: number | null
+  target: number
+  met: boolean
+  label: string
+}
+
+export type DashboardMilestone = {
+  type: string
+  title: string
+  date: string
+  message: string
+  value: string | null
+}
+
 export type DashboardResponse = {
   today: {
     date: string
@@ -26,6 +41,12 @@ export type DashboardResponse = {
     status: AdvisoryStatus
     messages: string[]
   }
+  targets: {
+    walk_distance: DashboardTargetProgress
+    songs: DashboardTargetProgress
+    nyha: DashboardTargetProgress
+  }
+  milestones: DashboardMilestone[]
 }
 
 async function parseJson<T>(response: Response): Promise<T> {

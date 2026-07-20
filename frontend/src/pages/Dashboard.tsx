@@ -41,18 +41,43 @@ function SummaryCard({
   value,
   empty,
   trend,
+  progress,
 }: {
   title: string
   value: string | null
   empty: string
   trend?: TrendPoint[]
+  progress?: string
 }) {
   return (
     <article className="section-card grid min-h-40 gap-3">
       <h2 className="text-base font-semibold text-slate-500">{title}</h2>
       <p className={classes('text-3xl font-bold tracking-tight', value ? 'text-clinical-ink' : 'text-slate-400')}>{value ?? empty}</p>
+      {progress ? <p className="text-sm font-semibold text-clinical-primaryDark">{progress}</p> : null}
       {trend ? <Sparkline points={trend} /> : null}
     </article>
+  )
+}
+
+function MilestonesCard({ dashboard }: { dashboard: DashboardResponse }) {
+  return (
+    <SectionCard>
+      <h2 className="text-2xl font-bold text-clinical-ink">Milestones</h2>
+      {dashboard.milestones.length === 0 ? (
+        <p>Keep recording - milestones will appear here as Simon's recovery builds.</p>
+      ) : (
+        <div className="grid gap-3">
+          {dashboard.milestones.map((milestone) => (
+            <article key={milestone.type}>
+              <h3 className="font-bold text-clinical-ink">{milestone.title}</h3>
+              <p>{milestone.message}</p>
+              {milestone.value ? <p className="text-sm font-semibold text-clinical-primaryDark">{milestone.value}</p> : null}
+            </article>
+          ))}
+        </div>
+      )}
+      <p><a className="btn-secondary no-underline" href="/targets">View all targets and milestones</a></p>
+    </SectionCard>
   )
 }
 
@@ -109,10 +134,11 @@ export function Dashboard({ accessToken }: DashboardProps) {
         <SummaryCard title="Weight" value={dashboard.today.weight === null ? null : `${dashboard.today.weight} kg`} empty="No weight recorded today yet" trend={dashboard.trends.weight_7d} />
         <SummaryCard title="Pulse" value={dashboard.today.pulse === null ? null : `${dashboard.today.pulse} bpm`} empty="No pulse recorded today yet" trend={dashboard.trends.pulse_7d} />
         <SummaryCard title="Blood Pressure" value={dashboard.today.bp} empty="No blood pressure recorded today yet" />
-        <SummaryCard title="Today's Walk" value={dashboard.today.walk_distance === null ? null : `${dashboard.today.walk_distance} m`} empty="No walk recorded today yet" trend={dashboard.trends.walk_7d} />
-        <SummaryCard title="Guitar" value={dashboard.today.songs === null ? null : `${dashboard.today.songs} songs`} empty="No guitar recorded today yet" />
-        <SummaryCard title="Current NYHA" value={dashboard.today.nyha === null ? null : `Class ${dashboard.today.nyha}`} empty="No NYHA recorded today yet" />
+        <SummaryCard title="Today's Walk" value={dashboard.today.walk_distance === null ? null : `${dashboard.today.walk_distance} m`} empty="No walk recorded today yet" trend={dashboard.trends.walk_7d} progress={dashboard.targets.walk_distance.label} />
+        <SummaryCard title="Guitar" value={dashboard.today.songs === null ? null : `${dashboard.today.songs} songs`} empty="No guitar recorded today yet" progress={dashboard.targets.songs.label} />
+        <SummaryCard title="Current NYHA" value={dashboard.today.nyha === null ? null : `Class ${dashboard.today.nyha}`} empty="No NYHA recorded today yet" progress={dashboard.targets.nyha.label} />
       </section>
+      <MilestonesCard dashboard={dashboard} />
       <p><a className="btn-primary no-underline" href="/">Record today's observations</a></p>
     </PageShell>
   )

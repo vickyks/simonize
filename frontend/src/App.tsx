@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Daily } from './pages/Daily'
 import { Doctor } from './pages/Doctor'
 import { Login } from './pages/Login'
+import { Targets } from './pages/Targets'
 import { SectionCard, classes } from './components/ui/PageShell'
 
 function AppContent() {
@@ -31,12 +32,14 @@ function AppContent() {
   const showDashboard = pathname === '/dashboard'
   const showCharts = pathname === '/charts'
   const showDoctor = pathname === '/doctor'
+  const showTargets = pathname === '/targets'
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', active: showDashboard },
-    { href: '/', label: 'Today', active: !showDashboard && !showCharts && !showDoctor },
+    { href: '/', label: 'Today', active: !showDashboard && !showCharts && !showDoctor && !showTargets },
     { href: '/charts', label: 'Charts', active: showCharts },
     { href: '/doctor', label: 'Doctor', active: showDoctor },
+    { href: '/targets', label: 'Targets', active: showTargets },
   ]
 
   return (
@@ -69,7 +72,8 @@ function AppContent() {
       {showDashboard ? <Dashboard accessToken={auth.accessToken ?? ''} /> : null}
       {showCharts ? <Charts accessToken={auth.accessToken ?? ''} /> : null}
       {showDoctor ? <Doctor accessToken={auth.accessToken ?? ''} /> : null}
-      {!showDashboard && !showCharts && !showDoctor ? <Daily /> : null}
+      {showTargets ? <Targets accessToken={auth.accessToken ?? ''} /> : null}
+      {!showDashboard && !showCharts && !showDoctor && !showTargets ? <Daily /> : null}
     </div>
   )
 }
