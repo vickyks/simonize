@@ -78,6 +78,28 @@ def test_dashboard_builds_today_values_and_trends():
         assert dashboard.advisory.status == "green"
 
 
+def test_dashboard_trends_only_include_latest_7_day_window():
+    with make_session() as session:
+        user = make_user(session)
+        service = ObservationService(session)
+        service.upsert(user, date(2026, 6, 30), ObservationType.WEIGHT, "94.0")
+        service.upsert(user, date(2026, 6, 30), ObservationType.PULSE, "82")
+        service.upsert(user, date(2026, 6, 30), ObservationType.WALK_DISTANCE, "120")
+        service.upsert(user, date(2026, 7, 7), ObservationType.WEIGHT, "92.8")
+        service.upsert(user, date(2026, 7, 8), ObservationType.PULSE, "74")
+        service.upsert(user, date(2026, 7, 9), ObservationType.WALK_DISTANCE, "250")
+
+        dashboard = DashboardService(session).build(
+            user_id=user.id, today=date(2026, 7, 13)
+        )
+
+        assert dashboard.trends.weight_7d == [
+            {"date": "2026-07-07", "value": 92.8}
+        ]
+        assert dashboard.trends.pulse_7d == [{"date": "2026-07-08", "value": 74}]
+        assert dashboard.trends.walk_7d == [{"date": "2026-07-09", "value": 250}]
+
+
 def test_dashboard_missing_today_values_are_null():
     with make_session() as session:
         user = make_user(session)

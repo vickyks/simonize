@@ -34,11 +34,14 @@ class TargetService:
         self.session = session
 
     def get_view(self, user_id: uuid.UUID) -> TargetsResponse:
-        targets = self._ensure_defaults(user_id)
         return TargetsResponse(
-            targets=[self._entry(targets[target_type]) for target_type in TARGET_ORDER],
+            targets=self.get_targets(user_id=user_id),
             milestones=AchievementService(self.session).list(user_id=user_id),
         )
+
+    def get_targets(self, user_id: uuid.UUID) -> list[TargetEntry]:
+        targets = self._ensure_defaults(user_id)
+        return [self._entry(targets[target_type]) for target_type in TARGET_ORDER]
 
     def update(
         self, user_id: uuid.UUID, target_type: TargetType, value: str | int

@@ -37,10 +37,12 @@ class DashboardService:
 
         grouped = self._group_by_date(observations)
         today_values = grouped.get(current_day, {})
+        recent_grouped = {
+            day: values for day, values in sorted(grouped.items()) if day >= start_day
+        }
         recent = [
             DailyWarningObservations(date=day, values=values)
-            for day, values in sorted(grouped.items())
-            if day >= start_day
+            for day, values in recent_grouped.items()
         ]
         advisory = WarningService().evaluate(today=today_values, recent=recent)
 
@@ -57,9 +59,11 @@ class DashboardService:
                 nyha=self._int(today_values.get(ObservationType.NYHA)),
             ),
             trends=DashboardTrends(
-                weight_7d=self._trend(grouped, ObservationType.WEIGHT, "float"),
-                pulse_7d=self._trend(grouped, ObservationType.PULSE, "int"),
-                walk_7d=self._trend(grouped, ObservationType.WALK_DISTANCE, "int"),
+                weight_7d=self._trend(recent_grouped, ObservationType.WEIGHT, "float"),
+                pulse_7d=self._trend(recent_grouped, ObservationType.PULSE, "int"),
+                walk_7d=self._trend(
+                    recent_grouped, ObservationType.WALK_DISTANCE, "int"
+                ),
             ),
             advisory=DashboardAdvisory(
                 status=advisory.status,
@@ -122,7 +126,7 @@ class DashboardService:
     ) -> DashboardTargets:
         target_entries = {
             target.type: target
-            for target in TargetService(self.session).get_view(user_id).targets
+            for target in TargetService(self.session).get_targets(user_id=user_id)
         }
         walk_target = target_entries[TargetType.WALK_DISTANCE].value
         songs_target = target_entries[TargetType.SONGS].value

@@ -44,6 +44,23 @@ def test_target_service_creates_defaults_in_stable_order():
         assert response.milestones == []
 
 
+def test_target_service_returns_target_entries_without_milestones():
+    with make_session() as session:
+        user = make_user(session)
+        ObservationService(session).upsert(
+            user, date(2026, 7, 13), ObservationType.WALK_DISTANCE, "325"
+        )
+
+        targets = TargetService(session).get_targets(user_id=user.id)
+
+        assert [target.type for target in targets] == [
+            TargetType.WALK_DISTANCE,
+            TargetType.SONGS,
+            TargetType.NYHA,
+        ]
+        assert [target.value for target in targets] == [500, 5, 2]
+
+
 def test_target_view_includes_achievements():
     with make_session() as session:
         user = make_user(session)
