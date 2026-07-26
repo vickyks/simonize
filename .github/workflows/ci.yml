@@ -151,6 +151,12 @@ jobs:
         run: |
           ssh ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
             cd /home/vicky/simonize || exit 0
+            echo "=== Deployed commit ==="
+            git rev-parse HEAD || true
+            echo "=== Frontend dist assets in container ==="
+            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T frontend sh -c "ls -la /app/dist/assets && sed -n '1,20p' /app/dist/index.html" || true
+            echo "=== Local Docker nginx index ==="
+            curl -fsS http://127.0.0.1:8082/ || true
             echo "=== Production services ==="
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps || true
             echo "=== Recent nginx logs ==="
