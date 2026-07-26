@@ -138,9 +138,27 @@ jobs:
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend sh -c "PYTHONPATH=. alembic upgrade head"
 
             echo "Recreating stateless production containers..."
+            before_backend=$(docker inspect -f '{{.Id}}' simonize_backend_1 2>/dev/null || true)
+            before_frontend=$(docker inspect -f '{{.Id}}' simonize_frontend_1 2>/dev/null || true)
+            before_nginx=$(docker inspect -f '{{.Id}}' simonize_nginx_1 2>/dev/null || true)
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop backend frontend nginx || true
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml rm -f backend frontend nginx
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d backend frontend nginx
+            after_backend=$(docker inspect -f '{{.Id}}' simonize_backend_1)
+            after_frontend=$(docker inspect -f '{{.Id}}' simonize_frontend_1)
+            after_nginx=$(docker inspect -f '{{.Id}}' simonize_nginx_1)
+            if [ -n "$before_backend" ] && [ "$before_backend" = "$after_backend" ]; then
+              echo "Backend container was not recreated"
+              exit 1
+            fi
+            if [ -n "$before_frontend" ] && [ "$before_frontend" = "$after_frontend" ]; then
+              echo "Frontend container was not recreated"
+              exit 1
+            fi
+            if [ -n "$before_nginx" ] && [ "$before_nginx" = "$after_nginx" ]; then
+              echo "Nginx container was not recreated"
+              exit 1
+            fi
 
             echo "Smoke checking Simonizer..."
             for i in $(seq 1 30); do
@@ -164,10 +182,6 @@ jobs:
             cd /home/vicky/simonize || exit 0
             echo "=== Deployed commit ==="
             git rev-parse HEAD || true
-            echo "=== Frontend dist assets in container ==="
-            NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T frontend sh -c "ls -la /app/dist/assets && sed -n '1,20p' /app/dist/index.html" || true
-            echo "=== Local Docker nginx index ==="
-            curl -fsS http://127.0.0.1:8082/ || true
             echo "=== Production services ==="
             NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps || true
             echo "=== Recent nginx logs ==="
