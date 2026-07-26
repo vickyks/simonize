@@ -105,9 +105,13 @@ Equivalent raw Docker Compose commands:
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d db
 NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend sh -c "PYTHONPATH=. alembic upgrade head"
-NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop backend frontend nginx
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml rm -f backend frontend nginx
+NGINX_HTTP_PORT=127.0.0.1:8082 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d backend frontend nginx
 curl -fsS http://127.0.0.1:8082/api/health
 ```
+
+Production recreates only the stateless `backend`, `frontend`, and `nginx` containers after each build. The `db` container and `pgdata` volume are left intact.
 
 Deployments must run migrations before starting the full stack. Slice 1 authentication adds the `users` table, and Slice 2 daily observations add the `observations` table, so the backend expects Alembic to have upgraded the database before the app starts serving requests.
 
