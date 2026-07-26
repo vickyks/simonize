@@ -136,7 +136,7 @@ prod-deploy-local: prod-check-env
     {{prod_compose}} up -d db
     @for i in $$(seq 1 30); do {{prod_compose}} exec -T db pg_isready -U simonizer && exit 0; sleep 2; done; exit 1
     {{prod_compose}} run --rm backend sh -c "PYTHONPATH=. alembic upgrade head"
-    {{prod_compose}} up -d
+    {{prod_compose}} up -d --force-recreate
     curl -fsS http://127.0.0.1:8082/api/health
 
 # Stop containers and remove orphaned containers, keeping the database volume.
