@@ -3,7 +3,7 @@ import type { ChecklistItem } from '../../api/observations'
 
 export function DailyChecklist({ items }: { items: ChecklistItem[] }) {
   return (
-    <nav aria-label="Daily checklist" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <nav aria-label="Readings checklist" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {items.map((item) => (
         <button
           key={item.type}

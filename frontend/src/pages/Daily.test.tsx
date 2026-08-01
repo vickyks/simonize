@@ -56,7 +56,7 @@ describe('Daily', () => {
     expect(screen.getByLabelText('Oxygen (%)')).toHaveValue('97')
     expect(screen.getByRole('main')).toHaveClass('page-shell')
 
-    const checklist = screen.getByRole('navigation', { name: 'Daily checklist' })
+    const checklist = screen.getByRole('navigation', { name: 'Readings checklist' })
     expect(checklist).toHaveClass('grid gap-3 sm:grid-cols-2 lg:grid-cols-4')
     expect(within(checklist).getByRole('button', { name: 'Weight' })).toHaveClass('border-emerald-200 bg-emerald-50 text-emerald-900')
     expect(within(checklist).getByRole('button', { name: 'Pulse' })).toHaveClass('border-slate-200 bg-white text-slate-600')
@@ -87,6 +87,55 @@ describe('Daily', () => {
     fireEvent.change(dateInput, { target: { value: '2026-07-10' } })
 
     expect(window.location.pathname).toBe('/2026-07-10')
+  })
+
+  it('does not save stale readings while a changed date is loading', async () => {
+    let resolveChangedDate: (response: { ok: boolean; json: () => Promise<unknown> }) => void = () => {}
+    const fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/observations/2026-07-20') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            date: '2026-07-20',
+            observations: {
+              oxygen: { type: 'oxygen', value: '97', metadata: null, updated_at: '2026-07-20T08:00:00Z' },
+            },
+            checklist: [],
+          }),
+        })
+      }
+      if (url === '/api/observations/2026-07-21') {
+        return new Promise((resolve) => {
+          resolveChangedDate = resolve
+        })
+      }
+
+      return Promise.resolve({ ok: true, json: async () => ({}) })
+    })
+    vi.stubGlobal('fetch', fetch)
+    window.history.replaceState(null, '', '/2026-07-20')
+
+    render(<Daily />)
+
+    const oxygen = await screen.findByLabelText('Oxygen (%)')
+    fireEvent.change(screen.getByLabelText('Reading date'), { target: { value: '2026-07-21' } })
+    fireEvent.blur(oxygen)
+
+    expect(fetch).not.toHaveBeenCalledWith('/api/observations/2026-07-21/oxygen', expect.anything())
+
+    resolveChangedDate({
+      ok: true,
+      json: async () => ({
+        date: '2026-07-21',
+        observations: {
+          oxygen: { type: 'oxygen', value: '98', metadata: null, updated_at: '2026-07-21T08:00:00Z' },
+        },
+        checklist: [],
+      }),
+    })
+
+    expect(await screen.findByLabelText('Oxygen (%)')).toHaveValue('98')
   })
 
   it('saves oxygen readings', async () => {

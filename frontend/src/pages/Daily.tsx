@@ -91,9 +91,10 @@ export function Daily() {
   const auth = useAuth()
   const [pathDate, setPathDate] = useState(routeDate())
   const [daily, setDaily] = useState<DailyObservations | null>(null)
+  const [loadedDate, setLoadedDate] = useState<string | null>(null)
   const [values, setValues] = useState<Record<string, string | string[]>>({})
   const [saveStates, setSaveStates] = useState<Partial<Record<ObservationType, SaveState>>>({})
-  const [loadError, setLoadError] = useState(false)
+  const [loadErrorDate, setLoadErrorDate] = useState<string | null>(null)
   const date = pathDate
 
   useEffect(() => {
@@ -106,18 +107,26 @@ export function Daily() {
 
   useEffect(() => {
     if (!auth.accessToken || !isIsoDate(date)) return
+    let cancelled = false
     observationsApi.getDailyObservations(date, auth.accessToken)
       .then((data) => {
+        if (cancelled) return
         setDaily(data)
+        setLoadedDate(date)
+        setSaveStates({})
         setValues(Object.fromEntries(Object.entries(data.observations).map(([key, observation]) => [
           key,
           key === 'walk_time' ? secondsToMinutesValue(observation.value) : observation.value,
         ])))
-        setLoadError(false)
+        setLoadErrorDate(null)
       })
       .catch((error: Error) => {
-        if (error.message !== '401') setLoadError(true)
+        if (cancelled) return
+        if (error.message !== '401') setLoadErrorDate(date)
       })
+    return () => {
+      cancelled = true
+    }
   }, [auth.accessToken, date])
 
   function isBlank(value: string) {
@@ -176,8 +185,8 @@ export function Daily() {
   }
 
   if (!isIsoDate(date)) return <PageShell><SectionCard><h1 className="section-title">That date does not look right</h1><a href="/">Go to today</a></SectionCard></PageShell>
-  if (loadError) return <PageShell><SectionCard><h1 className="section-title">Could not load observations</h1><p className="page-copy">Please try again.</p></SectionCard></PageShell>
-  if (!daily) return <PageShell><SectionCard><p className="page-copy">Loading...</p></SectionCard></PageShell>
+  if (loadErrorDate === date) return <PageShell><SectionCard><h1 className="section-title">Could not load observations</h1><p className="page-copy">Please try again.</p></SectionCard></PageShell>
+  if (!daily || loadedDate !== date) return <PageShell><SectionCard><p className="page-copy">Loading...</p></SectionCard></PageShell>
 
   const bp = stringValue(values.bp).split('/')
   const historical = date !== todayIso()
@@ -201,7 +210,7 @@ export function Daily() {
         </div>
       </PageHeader>
       <SectionCard>
-        <h2 className="section-title mb-4">Daily checklist</h2>
+        <h2 className="section-title mb-4">Readings checklist</h2>
         <DailyChecklist items={daily.checklist} />
       </SectionCard>
       <SectionCard>
