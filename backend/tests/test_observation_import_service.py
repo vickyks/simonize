@@ -142,6 +142,36 @@ def test_apply_overwrites_selected_conflict_only():
 
         result = service.apply(user=user, items=items)
         observations = ObservationService(session).get_for_date(user, date(2026, 6, 28))
+        imported = item_by_type(result, "2026-06-28", "weight")
 
         assert result.summary.imported > 0
+        assert imported.status == "imported"
         assert observations[ObservationType.WEIGHT].value == "80.9"
+
+
+def test_apply_skips_stale_non_conflict_overwrite_when_observation_now_exists():
+    with make_session() as session:
+        user = make_user(session)
+
+        service = ObservationImportService(session)
+        preview = service.preview(user=user, text=SAMPLE_TSV)
+        ready_weight = item_by_type(preview, "2026-06-28", "weight")
+        ObservationService(session).upsert(
+            user,
+            date(2026, 6, 28),
+            ObservationType.WEIGHT,
+            "81.0",
+        )
+
+        result = service.apply(
+            user=user,
+            items=[ready_weight.model_copy(update={"overwrite": True})],
+        )
+        observations = ObservationService(session).get_for_date(user, date(2026, 6, 28))
+        skipped = item_by_type(result, "2026-06-28", "weight")
+
+        assert result.summary.imported == 0
+        assert result.summary.skipped == 1
+        assert skipped.status == "skipped"
+        assert skipped.existing_value == "81"
+        assert observations[ObservationType.WEIGHT].value == "81"

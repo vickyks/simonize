@@ -101,7 +101,9 @@ class ObservationImportService:
             observation_type = ObservationType(item.type)
             day = date.fromisoformat(item.date)
             existing = self.observations.get_for_date(user, day)
-            if observation_type in existing and not item.overwrite:
+            if observation_type in existing and (
+                not item.overwrite or not item.conflict
+            ):
                 result_items.append(
                     item.model_copy(
                         update={
