@@ -35,7 +35,7 @@ describe('ImportReadings', () => {
     fireEvent.change(screen.getByLabelText('Paste readings'), { target: { value: 'Date\tColumn 2\n28/06/2026\t80.9' } })
     fireEvent.click(screen.getByRole('button', { name: 'Preview import' }))
 
-    expect(await screen.findAllByText('2026-06-28')).not.toHaveLength(0)
+    expect(await screen.findByText('Row 2: 2026-06-28')).toBeInTheDocument()
     expect(screen.getByText('Weight')).toBeInTheDocument()
     expect(screen.getByText('80.9')).toBeInTheDocument()
     expect(screen.getByText('Conflict: existing 96')).toBeInTheDocument()
