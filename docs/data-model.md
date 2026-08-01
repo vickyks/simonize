@@ -33,6 +33,7 @@ The `UNIQUE (date, type)` constraint enforces one-per-day for the MVP. Future sl
 |------|-------------|---------|----------|
 | `weight` | float string | `"92.3"` | — |
 | `pulse` | integer string | `"71"` | — |
+| `oxygen` | integer string | `"97"` | — |
 | `bp` | `"SYS/DIA"` | `"121/78"` | — |
 | `walk_distance` | integer string (metres) | `"325"` | `{ "time_seconds": 840, "stops": 2 }` |
 | `walk_time` | integer string (seconds) | `"840"` | — |
@@ -88,6 +89,7 @@ Seeded account is identified by `is_seeded = true` and rotated from environment 
 |------|------|
 | `weight` | Float, 30.0–300.0 |
 | `pulse` | Integer, 30–250 |
+| `oxygen` | Integer, 50–100 |
 | `bp` | Two integers, SYS 60–250, DIA 40–150, SYS > DIA |
 | `walk_distance` | Integer, 0–50000 (metres) |
 | `walk_time` | Integer, 0–86400 (seconds) |

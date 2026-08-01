@@ -98,6 +98,7 @@ class ObservationService:
             ObservationType.WALK_STOPS,
             ObservationType.SONGS,
             ObservationType.NYHA,
+            ObservationType.OXYGEN,
         }:
             number = self._int(value, f"{observation_type.value} must be an integer")
             ranges = {
@@ -123,6 +124,11 @@ class ObservationService:
                 ),
                 ObservationType.SONGS: (0, 100, "Songs must be between 0 and 100"),
                 ObservationType.NYHA: (1, 4, "NYHA class must be between 1 and 4"),
+                ObservationType.OXYGEN: (
+                    50,
+                    100,
+                    "Oxygen must be between 50 and 100 percent",
+                ),
             }
             low, high, message = ranges[observation_type]
             if number < low or number > high:

@@ -22,6 +22,7 @@ CHECKLIST = [
     (ObservationType.WEIGHT, "Weight"),
     (ObservationType.PULSE, "Pulse"),
     (ObservationType.BP, "Blood Pressure"),
+    (ObservationType.OXYGEN, "Oxygen"),
     (ObservationType.WALK_DISTANCE, "Walk"),
     (ObservationType.SONGS, "Guitar"),
     (ObservationType.NYHA, "NYHA"),

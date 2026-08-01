@@ -61,6 +61,7 @@ def test_get_for_date_is_scoped_to_user():
     [
         (ObservationType.WEIGHT, "92.3", "92.3"),
         (ObservationType.PULSE, "71", "71"),
+        (ObservationType.OXYGEN, "97", "97"),
         (ObservationType.BP, "121/78", "121/78"),
         (ObservationType.WALK_DISTANCE, "325", "325"),
         (ObservationType.WALK_TIME, "840", "840"),
@@ -86,6 +87,8 @@ def test_valid_values_are_stored(observation_type, value, stored):
     [
         (ObservationType.WEIGHT, "20"),
         (ObservationType.PULSE, "251"),
+        (ObservationType.OXYGEN, "49"),
+        (ObservationType.OXYGEN, "101"),
         (ObservationType.BP, "78/121"),
         (ObservationType.WALK_DISTANCE, "50001"),
         (ObservationType.WALK_TIME, "86401"),
@@ -125,6 +128,8 @@ def test_weight_rejects_non_finite_values(value):
         (ObservationType.WALK_STOPS, True),
         (ObservationType.NYHA, 1.9),
         (ObservationType.NYHA, True),
+        (ObservationType.OXYGEN, 97.5),
+        (ObservationType.OXYGEN, True),
     ],
 )
 def test_integer_values_reject_non_integral_numbers_and_booleans(

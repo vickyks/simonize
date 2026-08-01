@@ -95,6 +95,33 @@ def test_put_and_get_weight_updates_checklist():
             clear_overrides()
 
 
+def test_put_and_get_oxygen_updates_checklist():
+    with make_session() as session:
+        user = seed_user(session)
+        client = make_client(session)
+        headers = {"Authorization": f"Bearer {token_for(session, user)}"}
+        try:
+            saved = client.put(
+                "/api/observations/2026-06-27/oxygen",
+                headers=headers,
+                json={"value": "97"},
+            )
+            loaded = client.get("/api/observations/2026-06-27", headers=headers)
+
+            assert saved.status_code == 200
+            assert saved.json()["value"] == "97"
+            assert loaded.status_code == 200
+            assert loaded.json()["observations"]["oxygen"]["value"] == "97"
+            checklist = {item["type"]: item for item in loaded.json()["checklist"]}
+            assert checklist["oxygen"] == {
+                "type": "oxygen",
+                "label": "Oxygen",
+                "recorded": True,
+            }
+        finally:
+            clear_overrides()
+
+
 def test_routes_are_scoped_to_current_user():
     with make_session() as session:
         simon = seed_user(session, "simon")

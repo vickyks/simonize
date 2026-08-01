@@ -16,6 +16,7 @@ class ObservationType(StrEnum):
     WALK_STOPS = "walk_stops"
     SONGS = "songs"
     NYHA = "nyha"
+    OXYGEN = "oxygen"
     SYMPTOMS = "symptoms"
     NOTES = "notes"
 
