@@ -92,6 +92,26 @@ def test_preview_flags_invalid_walk_time_without_dropping_valid_same_row_fields(
         assert item_by_type(preview, "2026-06-28", "oxygen").status == "ready"
 
 
+def test_preview_counts_invalid_date_rows_as_errors():
+    text = "\n".join(
+        [
+            "Date\tColumn 2",
+            "not-a-date\t80.9",
+            "28/06/2026\t81.0",
+            "",
+        ]
+    )
+
+    with make_session() as session:
+        user = make_user(session)
+
+        preview = ObservationImportService(session).preview(user=user, text=text)
+
+        assert preview.summary.total_rows == 2
+        assert preview.summary.errors == 1
+        assert preview.summary.importable == 1
+
+
 def test_preview_detects_conflicts_and_apply_skips_by_default():
     with make_session() as session:
         user = make_user(session)
@@ -147,6 +167,41 @@ def test_apply_overwrites_selected_conflict_only():
         assert result.summary.imported > 0
         assert imported.status == "imported"
         assert observations[ObservationType.WEIGHT].value == "80.9"
+
+
+def test_apply_skips_stale_conflict_when_existing_value_changed_since_preview():
+    with make_session() as session:
+        user = make_user(session)
+        ObservationService(session).upsert(
+            user,
+            date(2026, 6, 28),
+            ObservationType.WEIGHT,
+            "81.0",
+        )
+
+        service = ObservationImportService(session)
+        preview = service.preview(user=user, text=SAMPLE_TSV)
+        conflict = item_by_type(preview, "2026-06-28", "weight")
+        ObservationService(session).upsert(
+            user,
+            date(2026, 6, 28),
+            ObservationType.WEIGHT,
+            "82.0",
+        )
+
+        result = service.apply(
+            user=user,
+            items=[conflict.model_copy(update={"overwrite": True})],
+        )
+        observations = ObservationService(session).get_for_date(user, date(2026, 6, 28))
+        skipped = item_by_type(result, "2026-06-28", "weight")
+
+        assert result.summary.imported == 0
+        assert result.summary.skipped == 1
+        assert skipped.status == "skipped"
+        assert skipped.conflict is True
+        assert skipped.existing_value == "82"
+        assert observations[ObservationType.WEIGHT].value == "82"
 
 
 def test_apply_skips_stale_non_conflict_overwrite_when_observation_now_exists():

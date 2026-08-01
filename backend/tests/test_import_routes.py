@@ -92,3 +92,31 @@ def test_import_preview_returns_rows_and_items():
             assert oxygen["conflict"] is False
         finally:
             clear_overrides()
+
+
+def test_import_apply_rejects_malformed_items():
+    with make_session() as session:
+        user = seed_user(session)
+        client = make_client(session)
+        headers = {"Authorization": f"Bearer {token_for(session, user)}"}
+        try:
+            response = client.post(
+                "/api/import/observations/apply",
+                headers=headers,
+                json={
+                    "items": [
+                        {
+                            "row": 2,
+                            "date": "not-a-date",
+                            "type": "not-a-type",
+                            "label": "Weight",
+                            "incoming_value": "80.9",
+                            "status": "ready",
+                        }
+                    ]
+                },
+            )
+
+            assert response.status_code == 422
+        finally:
+            clear_overrides()

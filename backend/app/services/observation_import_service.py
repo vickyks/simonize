@@ -98,22 +98,33 @@ class ObservationImportService:
             if item.status == "error":
                 result_items.append(item)
                 continue
-            observation_type = ObservationType(item.type)
+            observation_type = item.type
             day = date.fromisoformat(item.date)
             existing = self.observations.get_for_date(user, day)
-            if observation_type in existing and (
-                not item.overwrite or not item.conflict
-            ):
-                result_items.append(
-                    item.model_copy(
-                        update={
-                            "status": "skipped",
-                            "conflict": False,
-                            "existing_value": existing[observation_type].value,
-                        }
+            if observation_type in existing:
+                current_value = existing[observation_type].value
+                if not item.overwrite or not item.conflict:
+                    result_items.append(
+                        item.model_copy(
+                            update={
+                                "status": "skipped",
+                                "conflict": False,
+                                "existing_value": current_value,
+                            }
+                        )
                     )
-                )
-                continue
+                    continue
+                if current_value != item.existing_value:
+                    result_items.append(
+                        item.model_copy(
+                            update={
+                                "status": "skipped",
+                                "conflict": True,
+                                "existing_value": current_value,
+                            }
+                        )
+                    )
+                    continue
             try:
                 self.observations.upsert(
                     user,
@@ -157,7 +168,8 @@ class ObservationImportService:
             total_rows=len(rows),
             importable=sum(1 for item in items if item.status == "ready"),
             conflicts=sum(1 for item in items if item.status == "conflict"),
-            errors=sum(1 for item in items if item.status == "error"),
+            errors=sum(1 for item in items if item.status == "error")
+            + sum(1 for row in rows if row.status == "error"),
             skipped=sum(1 for item in items if item.status == "skipped"),
             imported=sum(1 for item in items if item.status == "imported"),
         )

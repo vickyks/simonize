@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from datetime import date
+
+from pydantic import BaseModel, field_validator
+
+from app.models.observation import ObservationType
 
 
 class ImportPreviewRequest(BaseModel):
@@ -17,7 +21,7 @@ class ImportSummary(BaseModel):
 class ImportItem(BaseModel):
     row: int
     date: str
-    type: str
+    type: ObservationType
     label: str
     incoming_value: str
     existing_value: str | None = None
@@ -25,6 +29,12 @@ class ImportItem(BaseModel):
     conflict: bool = False
     error: str | None = None
     overwrite: bool = False
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value: str) -> str:
+        date.fromisoformat(value)
+        return value
 
 
 class ImportApplyRequest(BaseModel):
