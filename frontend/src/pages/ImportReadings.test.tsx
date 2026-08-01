@@ -9,9 +9,10 @@ const preview = {
   items: [
     { row: 2, date: '2026-06-28', type: 'weight', label: 'Weight', incoming_value: '80.9', existing_value: null, status: 'ready', error: null, overwrite: false, conflict: false },
     { row: 2, date: '2026-06-28', type: 'oxygen', label: 'Oxygen', incoming_value: '97', existing_value: '96', status: 'conflict', error: null, overwrite: false, conflict: true },
+    { row: 2, date: '2026-06-28', type: 'walk_distance', label: 'Walk distance', incoming_value: '', existing_value: null, status: 'skipped', error: null, overwrite: false, conflict: false },
     { row: 3, date: '2026-07-09', type: 'nyha', label: 'NYHA', incoming_value: '3.5', existing_value: null, status: 'error', error: 'NYHA class must be between 1 and 4', overwrite: false, conflict: false },
   ],
-  summary: { total_rows: 2, importable: 1, conflicts: 1, errors: 1, skipped: 0, imported: 0 },
+  summary: { total_rows: 2, importable: 1, conflicts: 1, errors: 1, skipped: 1, imported: 0 },
 }
 
 const rowErrorPreview = {
@@ -39,6 +40,7 @@ describe('ImportReadings', () => {
     expect(screen.getByText('Weight')).toBeInTheDocument()
     expect(screen.getByText('80.9')).toBeInTheDocument()
     expect(screen.getByText('Conflict: existing 96')).toBeInTheDocument()
+    expect(screen.getByText('Skipped blank field')).toBeInTheDocument()
     expect(screen.getByText('NYHA class must be between 1 and 4')).toBeInTheDocument()
   })
 

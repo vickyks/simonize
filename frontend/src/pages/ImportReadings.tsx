@@ -56,7 +56,7 @@ export function ImportReadings({ accessToken }: { accessToken: string }) {
       {preview ? (
         <SectionCard>
           <h2 className="section-title mb-4">Preview</h2>
-          <p className="page-copy mb-4">{preview.summary.importable} ready. {preview.summary.conflicts} conflicts. {preview.summary.errors} errors.</p>
+          <p className="page-copy mb-4">{preview.summary.importable} ready. {preview.summary.conflicts} conflicts. {preview.summary.skipped} skipped. {preview.summary.errors} errors.</p>
           <div className="grid gap-3">
             {preview.rows.map((row) => (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4" key={`row-${row.row}`}>
@@ -68,7 +68,7 @@ export function ImportReadings({ accessToken }: { accessToken: string }) {
               <div className="rounded-2xl border border-slate-200 bg-white p-4" key={`${item.row}-${item.date}-${item.type}`}>
                 <p className="text-sm font-semibold text-slate-500">{item.date}</p>
                 <p className="font-semibold text-slate-900">{item.label}</p>
-                <p className="page-copy">{item.incoming_value}</p>
+                <p className="page-copy">{item.status === 'skipped' ? 'Skipped blank field' : item.incoming_value}</p>
                 {item.conflict ? <p className="text-sm font-semibold text-amber-700">Conflict: existing {item.existing_value}</p> : null}
                 {item.error ? <p className="text-sm font-semibold text-amber-700">{item.error}</p> : null}
                 {item.conflict ? (

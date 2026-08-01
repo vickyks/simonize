@@ -54,9 +54,9 @@ class ObservationImportService:
             rows.append(ImportRow(row=row_number, date=day.isoformat(), status="ok"))
             existing = self.observations.get_for_date(user, day)
             for column, (observation_type, label) in COLUMN_MAP.items():
-                raw = (row.get(column) or "").strip()
-                if raw == "":
+                if column not in row:
                     continue
+                raw = (row.get(column) or "").strip()
                 item = ImportItem(
                     row=row_number,
                     date=day.isoformat(),
@@ -65,6 +65,9 @@ class ObservationImportService:
                     incoming_value=raw,
                     status="ready",
                 )
+                if raw == "":
+                    items.append(item.model_copy(update={"status": "skipped"}))
+                    continue
                 try:
                     incoming = self._normalize_value(observation_type, raw)
                     item = item.model_copy(update={"incoming_value": incoming})
@@ -95,7 +98,7 @@ class ObservationImportService:
     def apply(self, user: User, items: list[ImportItem]) -> ImportApplyResponse:
         result_items: list[ImportItem] = []
         for item in items:
-            if item.status == "error":
+            if item.status in {"error", "skipped"}:
                 result_items.append(item)
                 continue
             observation_type = item.type

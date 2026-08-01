@@ -112,6 +112,28 @@ def test_preview_counts_invalid_date_rows_as_errors():
         assert preview.summary.importable == 1
 
 
+def test_preview_includes_blank_mapped_fields_as_skipped_items():
+    text = "\n".join(
+        [
+            "Date\tColumn 2\tWalk distance\tColumn 1",
+            "28/06/2026\t80.9\t\t97",
+            "",
+        ]
+    )
+
+    with make_session() as session:
+        user = make_user(session)
+
+        preview = ObservationImportService(session).preview(user=user, text=text)
+
+        walk_distance = item_by_type(preview, "2026-06-28", "walk_distance")
+        assert walk_distance.status == "skipped"
+        assert walk_distance.incoming_value == ""
+        assert walk_distance.conflict is False
+        assert walk_distance.error is None
+        assert preview.summary.skipped == 1
+
+
 def test_preview_detects_conflicts_and_apply_skips_by_default():
     with make_session() as session:
         user = make_user(session)
@@ -230,3 +252,29 @@ def test_apply_skips_stale_non_conflict_overwrite_when_observation_now_exists():
         assert skipped.status == "skipped"
         assert skipped.existing_value == "81"
         assert observations[ObservationType.WEIGHT].value == "81"
+
+
+def test_apply_keeps_blank_items_skipped_without_writing():
+    text = "\n".join(
+        [
+            "Date\tColumn 2\tWalk distance\tColumn 1",
+            "28/06/2026\t80.9\t\t97",
+            "",
+        ]
+    )
+
+    with make_session() as session:
+        user = make_user(session)
+        service = ObservationImportService(session)
+        preview = service.preview(user=user, text=text)
+
+        result = service.apply(user=user, items=preview.items)
+        observations = ObservationService(session).get_for_date(user, date(2026, 6, 28))
+        walk_distance = item_by_type(result, "2026-06-28", "walk_distance")
+
+        assert walk_distance.status == "skipped"
+        assert walk_distance.incoming_value == ""
+        assert result.summary.skipped == 1
+        assert ObservationType.WALK_DISTANCE not in observations
+        assert observations[ObservationType.WEIGHT].value == "80.9"
+        assert observations[ObservationType.OXYGEN].value == "97"

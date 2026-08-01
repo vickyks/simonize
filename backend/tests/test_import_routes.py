@@ -94,6 +94,32 @@ def test_import_preview_returns_rows_and_items():
             clear_overrides()
 
 
+def test_import_preview_returns_blank_cells_as_skipped_items():
+    with make_session() as session:
+        user = seed_user(session)
+        client = make_client(session)
+        headers = {"Authorization": f"Bearer {token_for(session, user)}"}
+        try:
+            response = client.post(
+                "/api/import/observations/preview",
+                headers=headers,
+                json={"text": "Date\tColumn 2\tWalk distance\n28/06/2026\t80.9\t\n"},
+            )
+
+            assert response.status_code == 200
+            items = response.json()["items"]
+            walk_distance = next(
+                item for item in items if item["type"] == "walk_distance"
+            )
+            assert walk_distance["status"] == "skipped"
+            assert walk_distance["incoming_value"] == ""
+            assert walk_distance["conflict"] is False
+            assert walk_distance["error"] is None
+            assert response.json()["summary"]["skipped"] == 1
+        finally:
+            clear_overrides()
+
+
 def test_import_apply_rejects_malformed_items():
     with make_session() as session:
         user = seed_user(session)
