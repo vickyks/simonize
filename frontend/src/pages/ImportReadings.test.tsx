@@ -14,6 +14,12 @@ const preview = {
   summary: { total_rows: 2, importable: 1, conflicts: 1, errors: 1, skipped: 0, imported: 0 },
 }
 
+const rowErrorPreview = {
+  rows: [{ row: 4, date: null, status: 'error', message: 'Invalid date "not-a-date"' }],
+  items: [],
+  summary: { total_rows: 1, importable: 0, conflicts: 0, errors: 1, skipped: 0, imported: 0 },
+}
+
 describe('ImportReadings', () => {
   afterEach(() => {
     cleanup()
@@ -34,6 +40,18 @@ describe('ImportReadings', () => {
     expect(screen.getByText('80.9')).toBeInTheDocument()
     expect(screen.getByText('Conflict: existing 96')).toBeInTheDocument()
     expect(screen.getByText('NYHA class must be between 1 and 4')).toBeInTheDocument()
+  })
+
+  it('shows row-level preview errors when there are no importable items', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => rowErrorPreview })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<ImportReadings accessToken="token" />)
+    fireEvent.change(screen.getByLabelText('Paste readings'), { target: { value: 'Date\tWeight\nnot-a-date\t80.9' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview import' }))
+
+    expect(await screen.findByText('Row 4')).toBeInTheDocument()
+    expect(screen.getByText('Invalid date "not-a-date"')).toBeInTheDocument()
   })
 
   it('applies selected overwrite decisions', async () => {
