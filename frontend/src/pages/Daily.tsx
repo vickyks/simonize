@@ -7,6 +7,7 @@ import { BloodPressureInput } from '../components/inputs/BloodPressureInput'
 import { DailyChecklist } from '../components/inputs/DailyChecklist'
 import { NotesInput } from '../components/inputs/NotesInput'
 import { NyhaSelector } from '../components/inputs/NyhaSelector'
+import { OxygenInput } from '../components/inputs/OxygenInput'
 import { PulseInput } from '../components/inputs/PulseInput'
 import type { SaveState } from '../components/inputs/SaveStatus'
 import { SongsInput } from '../components/inputs/SongsInput'
@@ -38,6 +39,15 @@ function isIsoDate(value: string) {
 function routeDate() {
   const path = window.location.pathname.replace(/^\//, '')
   return path === '' ? todayIso() : path
+}
+
+function navigateToDate(value: string) {
+  if (value === todayIso()) {
+    window.history.pushState(null, '', '/')
+  } else {
+    window.history.pushState(null, '', `/${value}`)
+  }
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
 function stringValue(value: string | string[] | undefined) {
@@ -79,11 +89,20 @@ function combinedWalkSaveState(saveStates: Partial<Record<ObservationType, SaveS
 
 export function Daily() {
   const auth = useAuth()
-  const date = routeDate()
+  const [pathDate, setPathDate] = useState(routeDate())
   const [daily, setDaily] = useState<DailyObservations | null>(null)
   const [values, setValues] = useState<Record<string, string | string[]>>({})
   const [saveStates, setSaveStates] = useState<Partial<Record<ObservationType, SaveState>>>({})
   const [loadError, setLoadError] = useState(false)
+  const date = pathDate
+
+  useEffect(() => {
+    function updatePathDate() {
+      setPathDate(routeDate())
+    }
+    window.addEventListener('popstate', updatePathDate)
+    return () => window.removeEventListener('popstate', updatePathDate)
+  }, [])
 
   useEffect(() => {
     if (!auth.accessToken || !isIsoDate(date)) return
@@ -165,9 +184,21 @@ export function Daily() {
 
   return (
     <PageShell>
-      {historical ? <aside className="status-banner border-amber-200 bg-amber-50 text-amber-950">You are editing {date}. <a href="/">Go to today</a></aside> : null}
-      <PageHeader kicker="Today" title="Today's Recovery">
-        <p>Record the observations that show how Simon is doing today. Each field saves automatically.</p>
+      {historical ? <aside className="status-banner border-blue-200 bg-blue-50 text-blue-950">You are adding readings for {date}. <a href="/">Today</a></aside> : null}
+      <PageHeader kicker="Readings" title="Add Readings">
+        <p>Record Simon's readings for the selected date. Each field saves automatically.</p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="field-label">
+            Reading date
+            <input
+              className="input-control mt-1"
+              type="date"
+              value={date}
+              onChange={(event) => navigateToDate(event.target.value)}
+            />
+          </label>
+          <a className="btn-secondary self-start sm:self-auto" href="/">Today</a>
+        </div>
       </PageHeader>
       <SectionCard>
         <h2 className="section-title mb-4">Daily checklist</h2>
@@ -180,6 +211,9 @@ export function Daily() {
         </div>
         <div className="mt-5 grid gap-5 scroll-mt-6" id="section-pulse">
           <PulseInput value={stringValue(values.pulse)} onChange={(value) => setValues((current) => ({ ...current, pulse: value }))} onBlur={() => saveNonBlank('pulse', stringValue(values.pulse))} saveState={saveStates.pulse ?? 'idle'} />
+        </div>
+        <div className="mt-5 grid gap-5 scroll-mt-6" id="section-oxygen">
+          <OxygenInput value={stringValue(values.oxygen)} onChange={(value) => setValues((current) => ({ ...current, oxygen: value }))} onBlur={() => saveNonBlank('oxygen', stringValue(values.oxygen))} saveState={saveStates.oxygen ?? 'idle'} />
         </div>
         <div className="mt-5 scroll-mt-6" id="section-bp">
           <BloodPressureInput systolic={bp[0] ?? ''} diastolic={bp[1] ?? ''} onSystolicChange={(value) => setValues((current) => ({ ...current, bp: `${value}/${bp[1] ?? ''}` }))} onDiastolicChange={(value) => setValues((current) => ({ ...current, bp: `${bp[0] ?? ''}/${value}` }))} onBlur={saveBloodPressure} saveState={saveStates.bp ?? 'idle'} />

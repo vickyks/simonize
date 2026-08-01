@@ -22,12 +22,14 @@ function mockDailyFetch() {
       observations: {
         weight: { type: 'weight', value: '92.3', metadata: null, updated_at: '2026-07-19T08:00:00Z' },
         bp: { type: 'bp', value: '121/78', metadata: null, updated_at: '2026-07-19T08:00:00Z' },
+        oxygen: { type: 'oxygen', value: '97', metadata: null, updated_at: '2026-07-19T08:00:00Z' },
         symptoms: { type: 'symptoms', value: ['good_day'], metadata: null, updated_at: '2026-07-19T08:00:00Z' },
       },
       checklist: [
         { type: 'weight', label: 'Weight', recorded: true },
         { type: 'pulse', label: 'Pulse', recorded: false },
         { type: 'bp', label: 'Blood pressure', recorded: true },
+        { type: 'oxygen', label: 'Oxygen', recorded: true },
         { type: 'walk_distance', label: 'Walk', recorded: false },
       ],
     }),
@@ -42,13 +44,16 @@ describe('Daily', () => {
     window.history.replaceState(null, '', '/')
   })
 
-  it('renders the daily observations form as a checklist-led stacked page', async () => {
+  it('renders the add readings form with a date picker and oxygen input', async () => {
     mockDailyFetch()
 
     render(<Daily />)
 
-    expect(await screen.findByRole('heading', { name: "Today's Recovery" })).toHaveClass('page-title')
-    expect(screen.getByText('Record the observations that show how Simon is doing today. Each field saves automatically.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Add Readings' })).toHaveClass('page-title')
+    expect(screen.getByText("Record Simon's readings for the selected date. Each field saves automatically.")).toBeInTheDocument()
+    expect(screen.getByLabelText('Reading date')).toHaveAttribute('type', 'date')
+    expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute('href', '/')
+    expect(screen.getByLabelText('Oxygen (%)')).toHaveValue('97')
     expect(screen.getByRole('main')).toHaveClass('page-shell')
 
     const checklist = screen.getByRole('navigation', { name: 'Daily checklist' })
@@ -70,6 +75,52 @@ describe('Daily', () => {
     expect(screen.getByLabelText('Guitar songs')).toHaveClass('input-control')
     expect(screen.getByLabelText('Notes')).toHaveClass('input-control min-h-36 resize-y')
     expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument()
+  })
+
+  it('navigates when the reading date changes', async () => {
+    mockDailyFetch()
+    window.history.replaceState(null, '', '/')
+
+    render(<Daily />)
+
+    const dateInput = await screen.findByLabelText('Reading date')
+    fireEvent.change(dateInput, { target: { value: '2026-07-10' } })
+
+    expect(window.location.pathname).toBe('/2026-07-10')
+  })
+
+  it('saves oxygen readings', async () => {
+    const fetch = vi.fn((input: RequestInfo | URL) => {
+      if (String(input).endsWith('/oxygen')) {
+        return Promise.resolve({ ok: true, json: async () => ({}) })
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          date: '2026-07-20',
+          observations: {
+            oxygen: { type: 'oxygen', value: '97', metadata: null, updated_at: '2026-07-20T08:00:00Z' },
+          },
+          checklist: [],
+        }),
+      })
+    })
+    vi.stubGlobal('fetch', fetch)
+    window.history.replaceState(null, '', '/2026-07-20')
+
+    render(<Daily />)
+
+    const oxygen = await screen.findByLabelText('Oxygen (%)')
+    fireEvent.change(oxygen, { target: { value: '98' } })
+    fireEvent.blur(oxygen)
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/observations/2026-07-20/oxygen',
+        expect.objectContaining({ body: JSON.stringify({ value: '98', metadata: null }) }),
+      )
+    })
   })
 
   it('displays walk time in minutes and saves it as seconds', async () => {

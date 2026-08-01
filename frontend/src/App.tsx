@@ -36,7 +36,7 @@ function AppContent() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', active: showDashboard },
-    { href: '/', label: 'Today', active: !showDashboard && !showCharts && !showDoctor && !showTargets },
+    { href: '/', label: 'Add Readings', active: !showDashboard && !showCharts && !showDoctor && !showTargets },
     { href: '/charts', label: 'Charts', active: showCharts },
     { href: '/doctor', label: 'Doctor', active: showDoctor },
     { href: '/targets', label: 'Targets', active: showTargets },

@@ -25,7 +25,7 @@ vi.mock('./pages/Dashboard', () => ({
 }))
 
 vi.mock('./pages/Daily', () => ({
-  Daily: () => <main><h1>Daily route</h1></main>,
+  Daily: () => <main><h1>Add Readings route</h1></main>,
 }))
 
 vi.mock('./pages/Charts', () => ({
@@ -78,12 +78,21 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { name: 'Dashboard route' })).toBeInTheDocument()
   })
 
-  it('renders daily observations at /', () => {
+  it('renders add readings at /', () => {
     window.history.replaceState(null, '', '/')
 
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: 'Daily route' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Add Readings route' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add Readings' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('shows an Add Readings navigation link', () => {
+    window.history.replaceState(null, '', '/dashboard')
+
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: 'Add Readings' })).toHaveAttribute('href', '/')
   })
 
   it('renders charts at /charts', () => {

@@ -4,6 +4,7 @@ export type ObservationType =
   | 'weight'
   | 'pulse'
   | 'bp'
+  | 'oxygen'
   | 'walk_distance'
   | 'walk_time'
   | 'walk_stops'
