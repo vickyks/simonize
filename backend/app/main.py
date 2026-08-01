@@ -6,6 +6,7 @@ from app.database import get_session
 from app.routers.auth import router as auth_router
 from app.routers.charts import router as charts_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.imports import router as imports_router
 from app.routers.observations import router as observations_router
 from app.routers.summary import router as summary_router
 from app.routers.targets import router as targets_router
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Simonizer API", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(observations_router)
+app.include_router(imports_router)
 app.include_router(dashboard_router)
 app.include_router(charts_router)
 app.include_router(summary_router)
