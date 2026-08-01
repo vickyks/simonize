@@ -65,11 +65,31 @@ def test_preview_maps_mums_tsv_and_flags_invalid_nyha():
         assert item_by_type(preview, "2026-06-28", "songs").incoming_value == "6"
         assert item_by_type(preview, "2026-06-28", "nyha").incoming_value == "4"
         assert item_by_type(preview, "2026-06-28", "oxygen").incoming_value == "97"
+        assert item_by_type(preview, "2026-07-09", "nyha").incoming_value == "3.5"
         assert item_by_type(preview, "2026-07-09", "nyha").status == "error"
-        assert (
-            item_by_type(preview, "2026-07-09", "nyha").error
-            == "NYHA class must be between 1 and 4"
-        )
+        assert item_by_type(preview, "2026-07-09", "nyha").error is not None
+
+
+def test_preview_flags_invalid_walk_time_without_dropping_valid_same_row_fields():
+    text = "\n".join(
+        [
+            "Date\tColumn 2\tWalk Time\tColumn 1",
+            "28/06/2026\t80.9\tvery tired\t97",
+            "",
+        ]
+    )
+
+    with make_session() as session:
+        user = make_user(session)
+
+        preview = ObservationImportService(session).preview(user=user, text=text)
+
+        walk_time = item_by_type(preview, "2026-06-28", "walk_time")
+        assert walk_time.incoming_value == "very tired"
+        assert walk_time.status == "error"
+        assert walk_time.error is not None
+        assert item_by_type(preview, "2026-06-28", "weight").status == "ready"
+        assert item_by_type(preview, "2026-06-28", "oxygen").status == "ready"
 
 
 def test_preview_detects_conflicts_and_apply_skips_by_default():
@@ -87,14 +107,18 @@ def test_preview_detects_conflicts_and_apply_skips_by_default():
         conflict = item_by_type(preview, "2026-06-28", "weight")
 
         assert conflict.status == "conflict"
+        assert conflict.conflict is True
         assert conflict.existing_value == "81"
         assert conflict.incoming_value == "80.9"
+        assert item_by_type(preview, "2026-06-28", "oxygen").conflict is False
 
         result = service.apply(user=user, items=preview.items)
         observations = ObservationService(session).get_for_date(user, date(2026, 6, 28))
+        skipped = item_by_type(result, "2026-06-28", "weight")
 
         assert result.summary.imported > 0
         assert result.summary.skipped >= 1
+        assert skipped.conflict is False
         assert observations[ObservationType.WEIGHT].value == "81"
         assert observations[ObservationType.OXYGEN].value == "97"
 

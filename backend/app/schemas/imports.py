@@ -22,6 +22,7 @@ class ImportItem(BaseModel):
     incoming_value: str
     existing_value: str | None = None
     status: str
+    conflict: bool = False
     error: str | None = None
     overwrite: bool = False
 

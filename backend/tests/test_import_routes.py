@@ -1,7 +1,11 @@
+from datetime import date
+
 from app.database import get_session
 from app.main import app
+from app.models.observation import ObservationType
 from app.models.user import User
 from app.services.auth_service import AuthService
+from app.services.observation_service import ObservationService
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
@@ -60,6 +64,12 @@ def test_import_preview_requires_auth():
 def test_import_preview_returns_rows_and_items():
     with make_session() as session:
         user = seed_user(session)
+        ObservationService(session).upsert(
+            user,
+            date(2026, 6, 28),
+            ObservationType.WEIGHT,
+            "81.0",
+        )
         client = make_client(session)
         headers = {"Authorization": f"Bearer {token_for(session, user)}"}
         try:
@@ -74,5 +84,11 @@ def test_import_preview_returns_rows_and_items():
                 "weight",
                 "oxygen",
             }
+            items = response.json()["items"]
+            weight = next(item for item in items if item["type"] == "weight")
+            oxygen = next(item for item in items if item["type"] == "oxygen")
+            assert weight["status"] == "conflict"
+            assert weight["conflict"] is True
+            assert oxygen["conflict"] is False
         finally:
             clear_overrides()

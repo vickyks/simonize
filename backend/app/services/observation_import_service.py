@@ -57,18 +57,19 @@ class ObservationImportService:
                 raw = (row.get(column) or "").strip()
                 if raw == "":
                     continue
-                incoming = self._normalize_value(observation_type, raw)
                 item = ImportItem(
                     row=row_number,
                     date=day.isoformat(),
                     type=observation_type.value,
                     label=label,
-                    incoming_value=incoming,
+                    incoming_value=raw,
                     status="ready",
                 )
                 try:
+                    incoming = self._normalize_value(observation_type, raw)
+                    item = item.model_copy(update={"incoming_value": incoming})
                     self.observations._serialize_value(observation_type, incoming)
-                except ValidationError as exc:
+                except (ValueError, ValidationError) as exc:
                     items.append(
                         item.model_copy(update={"status": "error", "error": str(exc)})
                     )
@@ -78,6 +79,7 @@ class ObservationImportService:
                         item.model_copy(
                             update={
                                 "status": "conflict",
+                                "conflict": True,
                                 "existing_value": existing[observation_type].value,
                             }
                         )
@@ -104,6 +106,7 @@ class ObservationImportService:
                     item.model_copy(
                         update={
                             "status": "skipped",
+                            "conflict": False,
                             "existing_value": existing[observation_type].value,
                         }
                     )
@@ -118,10 +121,14 @@ class ObservationImportService:
                 )
             except ValidationError as exc:
                 result_items.append(
-                    item.model_copy(update={"status": "error", "error": str(exc)})
+                    item.model_copy(
+                        update={"status": "error", "conflict": False, "error": str(exc)}
+                    )
                 )
                 continue
-            result_items.append(item.model_copy(update={"status": "imported"}))
+            result_items.append(
+                item.model_copy(update={"status": "imported", "conflict": False})
+            )
         return ImportApplyResponse(
             items=result_items,
             summary=self._summary([], result_items),
@@ -138,8 +145,6 @@ class ObservationImportService:
         if observation_type == ObservationType.OXYGEN:
             match = re.search(r"\d+", value)
             return match.group(0) if match else value
-        if observation_type == ObservationType.NYHA and "." in value:
-            return value.replace(".", "")
         if observation_type == ObservationType.WALK_TIME:
             minutes = float(value)
             return str(round(minutes * 60))
