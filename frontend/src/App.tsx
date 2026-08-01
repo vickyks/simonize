@@ -3,6 +3,7 @@ import { Charts } from './pages/Charts'
 import { Dashboard } from './pages/Dashboard'
 import { Daily } from './pages/Daily'
 import { Doctor } from './pages/Doctor'
+import { ImportReadings } from './pages/ImportReadings'
 import { Login } from './pages/Login'
 import { Targets } from './pages/Targets'
 import { SectionCard, classes } from './components/ui/PageShell'
@@ -33,10 +34,12 @@ function AppContent() {
   const showCharts = pathname === '/charts'
   const showDoctor = pathname === '/doctor'
   const showTargets = pathname === '/targets'
+  const showImport = pathname === '/import'
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', active: showDashboard },
-    { href: '/', label: 'Add Readings', active: !showDashboard && !showCharts && !showDoctor && !showTargets },
+    { href: '/', label: 'Add Readings', active: !showDashboard && !showCharts && !showDoctor && !showTargets && !showImport },
+    { href: '/import', label: 'Import Readings', active: showImport },
     { href: '/charts', label: 'Charts', active: showCharts },
     { href: '/doctor', label: 'Doctor', active: showDoctor },
     { href: '/targets', label: 'Targets', active: showTargets },
@@ -73,7 +76,8 @@ function AppContent() {
       {showCharts ? <Charts accessToken={auth.accessToken ?? ''} /> : null}
       {showDoctor ? <Doctor accessToken={auth.accessToken ?? ''} /> : null}
       {showTargets ? <Targets accessToken={auth.accessToken ?? ''} /> : null}
-      {!showDashboard && !showCharts && !showDoctor && !showTargets ? <Daily /> : null}
+      {showImport ? <ImportReadings accessToken={auth.accessToken ?? ''} /> : null}
+      {!showDashboard && !showCharts && !showDoctor && !showTargets && !showImport ? <Daily /> : null}
     </div>
   )
 }
